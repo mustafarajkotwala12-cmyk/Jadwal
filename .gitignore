@@ -1,0 +1,37 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Xcode & SwiftPM
+.build/
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+.swiftpm/configuration/
+.swiftpm/xcode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Jamea Helper Sensitive Credentials & Cache
+data/jamea_token.json
+data/browser-profile/
+data/TimeTable_*.xlsx
+data/timetable_raw.json
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*~
