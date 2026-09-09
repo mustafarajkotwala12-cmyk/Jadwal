@@ -719,23 +719,41 @@ async def main():
                 else:
                     print(f"Saved session expired or invalid: {e}")
                 delete_token()
+                try:
+                    await page.evaluate("() => sessionStorage.removeItem('webauth_token_capture')")
+                    await page.goto(JAMEA_URL)
+                except Exception:
+                    pass
                 print("Please log in through ITS.")
 
         if not authenticated:
             print()
             print("A browser window has been opened.")
-            print("Log in normally through ITS.")
-            print("Once you reach the Jamea dashboard,")
-            print("return here and press ENTER.")
+            print("Please log in through ITS in the browser window.")
+            print("Waiting for login to complete...")
             print()
 
-            input()
+            token = None
+            for _ in range(120):  # Wait up to 120 seconds for user to log in
+                await asyncio.sleep(1)
+                try:
+                    if page.is_closed():
+                        raise RuntimeError("Browser window was closed before login completed.")
+                    raw_token = await page.evaluate("""
+                        () => sessionStorage.getItem("webauth_token_capture")
+                    """)
+                    if raw_token and isinstance(raw_token, str) and len(raw_token) > 20:
+                        token = raw_token
+                        break
+                except Exception as e:
+                    if "closed" in str(e).lower():
+                        raise
+                    continue
 
-            # Make sure we're authenticated.
-            token = await get_token(page)
+            if not token:
+                raise RuntimeError("Login timed out. Please click Sync again and log in.")
 
             save_token(token)
-
             print("Jamea authentication detected.")
 
             claims = await get_user_info_from_token(page)
