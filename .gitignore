@@ -4,6 +4,7 @@
 .LSOverride
 Icon
 ._*
+*.iconset
 
 # Xcode & SwiftPM
 .build/

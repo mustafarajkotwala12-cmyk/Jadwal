@@ -53,7 +53,10 @@ let package = Package(
                 "SwiftPersistence",
                 "SwiftIntegrations"
             ],
-            path: "macOSApp"
+            path: "macOSApp",
+            resources: [
+                .process("Resources")
+            ]
         ),
     ]
 )

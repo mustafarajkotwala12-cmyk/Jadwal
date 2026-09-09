@@ -1,6 +1,12 @@
-# SWIFT — Academic Operating System for Aljamea-tus-Saifiyah
+<p align="center">
+  <img src="assets/icon.png" width="120" height="120" alt="SWIFT App Icon" />
+</p>
 
-**SWIFT** is a native macOS application and automation pipeline designed to track weekly timetables, manage academic tasks, detect schedule changes non-destructively, and provide a lightweight Menu Bar companion for students.
+<h1 align="center">SWIFT — Academic Operating System</h1>
+
+<p align="center">
+  <b>Native macOS application and automation pipeline for Aljamea-tus-Saifiyah weekly timetables, task protection, and Menu Bar tracking.</b>
+</p>
 
 ---
 
