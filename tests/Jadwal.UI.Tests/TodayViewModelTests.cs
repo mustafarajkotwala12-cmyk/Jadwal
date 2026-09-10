@@ -139,4 +139,45 @@ public class TodayViewModelTests
         card.ToggleFlip();
         card.IsFlipped.Should().BeFalse();
     }
+
+    [Fact]
+    public void TodayViewModel_InitializesCurrentTimeStringImmediately()
+    {
+        var taskRepo = new MemoryTaskRepo();
+        var timeRepo = new MemoryTimetableRepo();
+        var changeRepo = new MemoryChangeRepo();
+        var dummyProvider = new DummyJamiaProvider();
+        var timeProvider = new TestTimeProvider();
+
+        var taskService = new TaskService(taskRepo, timeProvider);
+        var timetableService = new TimetableService(timeRepo, changeRepo, taskRepo, dummyProvider);
+        var dashboardService = new DashboardService(timeRepo, taskRepo, changeRepo, timeProvider);
+
+        var vm = new TodayViewModel(dashboardService, taskService, timetableService, timeProvider);
+
+        vm.CurrentTimeString.Should().NotBeNullOrWhiteSpace();
+        vm.CurrentTimeString.Should().Contain("M"); // AM or PM
+    }
+
+    [Fact]
+    public void TodayViewModel_OnTick_UpdatesCurrentTimeString()
+    {
+        var taskRepo = new MemoryTaskRepo();
+        var timeRepo = new MemoryTimetableRepo();
+        var changeRepo = new MemoryChangeRepo();
+        var dummyProvider = new DummyJamiaProvider();
+        var timeProvider = new TestTimeProvider();
+
+        var taskService = new TaskService(taskRepo, timeProvider);
+        var timetableService = new TimetableService(timeRepo, changeRepo, taskRepo, dummyProvider);
+        var dashboardService = new DashboardService(timeRepo, taskRepo, changeRepo, timeProvider);
+
+        var vm = new TodayViewModel(dashboardService, taskService, timetableService, timeProvider);
+        vm.CurrentTimeString = "Old Time";
+
+        vm.OnTick();
+
+        vm.CurrentTimeString.Should().NotBe("Old Time");
+        vm.CurrentTimeString.Should().NotBeEmpty();
+    }
 }

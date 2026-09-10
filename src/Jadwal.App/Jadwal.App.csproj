@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\data\timetable.json" CopyToOutputDirectory="PreserveNewest" Link="data\timetable.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Jadwal.UI\Jadwal.UI.csproj" />
     <ProjectReference Include="..\Jadwal.Infrastructure\Jadwal.Infrastructure.csproj" />
     <ProjectReference Include="..\Jadwal.Integrations.Jamia\Jadwal.Integrations.Jamia.csproj" />

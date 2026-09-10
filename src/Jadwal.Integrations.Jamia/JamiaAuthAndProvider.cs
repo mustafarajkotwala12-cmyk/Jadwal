@@ -66,7 +66,12 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         // Check local token file
         var candidatePaths = new[]
         {
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "jamea_token.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "jamea_token.json"),
+            Path.Combine(AppContext.BaseDirectory, "data", "jamea_token.json"),
+            Path.Combine(AppContext.BaseDirectory, "jamea_token.json"),
             Path.Combine(_workspaceDirectory, "data", "jamea_token.json"),
+            Path.Combine(_workspaceDirectory, "Data", "jamea_token.json"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "jamea_token.json")
         };
 
@@ -99,11 +104,26 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
 
     public async Task<TimetableSnapshot?> FetchCurrentTimetableAsync(bool forceLogin = false, CancellationToken ct = default)
     {
-        // 1. Check if Data/timetable.json is directly readable
+        // 1. If we have a valid token, try direct HTTPS API fetch (pure C#, no Python needed)
+        var token = await GetAccessTokenAsync(ct);
+        if (!string.IsNullOrEmpty(token))
+        {
+            var directSnapshot = await FetchViaDirectApiAsync(token, ct);
+            if (directSnapshot != null)
+            {
+                return directSnapshot;
+            }
+        }
+
+        // 2. Check candidate local data files
         var candidateDataPaths = new[]
         {
-            Path.Combine(_workspaceDirectory, "Data", "timetable.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "timetable.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "timetable.json"),
+            Path.Combine(AppContext.BaseDirectory, "data", "timetable.json"),
+            Path.Combine(AppContext.BaseDirectory, "timetable.json"),
             Path.Combine(_workspaceDirectory, "data", "timetable.json"),
+            Path.Combine(_workspaceDirectory, "Data", "timetable.json"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
         };
 
@@ -122,8 +142,119 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             }
         }
 
-        // 2. [LEGACY-BRIDGE]: When live browser login is needed on desktop
+        // 3. [LEGACY-BRIDGE]: When live browser login is needed on desktop
         return await ExecuteLegacyBridgeAsync(forceLogin, candidateDataPaths, ct);
+    }
+
+    private async Task<TimetableSnapshot?> FetchViaDirectApiAsync(string token, CancellationToken ct)
+    {
+        try
+        {
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36");
+            client.DefaultRequestHeaders.Add("Origin", "https://beta.jameasaifiyah.org");
+            client.DefaultRequestHeaders.Add("Referer", "https://beta.jameasaifiyah.org/");
+            client.DefaultRequestHeaders.Add("X-Menu-Id", "1372");
+            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            // Extract claims from JWT
+            var parts = token.Split('.');
+            if (parts.Length != 3) return null;
+            var payload = parts[1].Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4) { case 2: payload += "=="; break; case 3: payload += "="; break; }
+            var claimsJson = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            using var claimsDoc = JsonDocument.Parse(claimsJson);
+            var root = claimsDoc.RootElement;
+
+            int yearAr = 1448;
+            if (root.TryGetProperty("yearAR", out var yProp))
+            {
+                if (yProp.ValueKind == JsonValueKind.Number) yearAr = yProp.GetInt32();
+                else if (int.TryParse(yProp.GetString(), out var yParsed)) yearAr = yParsed;
+            }
+
+            string branchId = root.TryGetProperty("branchID", out var bProp) ? bProp.ToString() : "3";
+            string classId = root.TryGetProperty("classID", out var cProp) ? cProp.ToString() : "3309";
+
+            // 1. Get current week
+            var weekReqBody = JsonSerializer.Serialize(new { yearAR = yearAr, branchID = branchId, teacherID = "%" });
+            var weekResp = await client.PostAsync(
+                "https://api.jameasaifiyah.org/api/JadwalPage/SelectWeekDDList_JadwalReports",
+                new StringContent(weekReqBody, Encoding.UTF8, "application/json"), ct);
+
+            if (!weekResp.IsSuccessStatusCode) return null;
+            var weekJson = await weekResp.Content.ReadAsStringAsync(ct);
+            using var weekDoc = JsonDocument.Parse(weekJson);
+
+            int batchWeekNumber = 25;
+            if (weekDoc.RootElement.TryGetProperty("data", out var weeksArray) && weeksArray.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var w in weeksArray.EnumerateArray())
+                {
+                    if (w.TryGetProperty("isCurrent", out var isCur) && isCur.GetBoolean())
+                    {
+                        if (w.TryGetProperty("batchWeekNumber", out var bwn))
+                        {
+                            batchWeekNumber = bwn.GetInt32();
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 2. Request Excel Generation
+            var excelReqBody = JsonSerializer.Serialize(new
+            {
+                yearAR = yearAr,
+                branchID = branchId,
+                timeTablePeriodDayTypeID = 1,
+                batchWeeKNumber = batchWeekNumber,
+                type = "Class",
+                classID = classId,
+                teacherID = "%"
+            });
+
+            var excelResp = await client.PostAsync(
+                "https://api.jameasaifiyah.org/api/JadwalReport/JadwalTimeTableReportExcel",
+                new StringContent(excelReqBody, Encoding.UTF8, "application/json"), ct);
+
+            if (!excelResp.IsSuccessStatusCode) return null;
+            var excelJson = await excelResp.Content.ReadAsStringAsync(ct);
+            using var excelDoc = JsonDocument.Parse(excelJson);
+
+            string? downloadUrl = null;
+            if (excelDoc.RootElement.TryGetProperty("data", out var dataObj) &&
+                dataObj.TryGetProperty("downloadUrl", out var dlProp))
+            {
+                downloadUrl = dlProp.GetString();
+            }
+
+            if (string.IsNullOrEmpty(downloadUrl)) return null;
+
+            // 3. Download Excel bytes
+            var dlResp = await client.GetAsync(downloadUrl, ct);
+            if (!dlResp.IsSuccessStatusCode) return null;
+
+            await using var excelStream = await dlResp.Content.ReadAsStreamAsync(ct);
+            var snapshot = ExcelTimetableParser.Parse(excelStream);
+
+            // Persist to local data/timetable.json for offline access
+            try
+            {
+                var saveDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data");
+                Directory.CreateDirectory(saveDir);
+                var savePath = Path.Combine(saveDir, "timetable.json");
+                await using var writeStream = File.Create(savePath);
+                await JsonSerializer.SerializeAsync(writeStream, snapshot, new JsonSerializerOptions { WriteIndented = true }, ct);
+            }
+            catch { }
+
+            return snapshot;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>

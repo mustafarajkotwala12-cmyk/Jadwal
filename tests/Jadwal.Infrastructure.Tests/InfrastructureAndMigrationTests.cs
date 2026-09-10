@@ -74,4 +74,25 @@ public class InfrastructureAndMigrationTests
             if (Directory.Exists(targetDir)) Directory.Delete(targetDir, true);
         }
     }
+
+    [Fact]
+    public async Task JsonFileTimetableRepository_EmptyStorage_SeedsFromEmbeddedOrBundledTimetable()
+    {
+        var emptyDir = Path.Combine(Path.GetTempPath(), "timetable_seed_test_" + Guid.NewGuid());
+        try
+        {
+            var repo = new JsonFileTimetableRepository(emptyDir);
+            var snapshot = await repo.GetLatestSnapshotAsync();
+
+            snapshot.Should().NotBeNull();
+            snapshot!.Periods.Should().NotBeEmpty();
+
+            // Verify it was persisted to stored_timetable.json
+            File.Exists(Path.Combine(emptyDir, "stored_timetable.json")).Should().BeTrue();
+        }
+        finally
+        {
+            if (Directory.Exists(emptyDir)) Directory.Delete(emptyDir, true);
+        }
+    }
 }

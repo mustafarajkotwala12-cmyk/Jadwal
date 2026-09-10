@@ -8,12 +8,12 @@
              x:DataType="vm:SettingsViewModel">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="20" Margin="24" MaxWidth="700" HorizontalAlignment="Left">
+        <StackPanel Spacing="20" Margin="24" MaxWidth="720" HorizontalAlignment="Left">
 
             <!-- HEADER -->
             <StackPanel Spacing="2">
                 <TextBlock Text="Settings &amp; Integration" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
-                <TextBlock Text="Configure portal credentials, sync, and system settings" FontSize="12" Foreground="#718096" />
+                <TextBlock Text="Configure portal credentials, sync schedule, and system settings" FontSize="12" Foreground="#718096" />
             </StackPanel>
 
             <!-- STATUS BANNER -->
@@ -21,7 +21,7 @@
                     Background="{DynamicResource GoldSoftBrush}"
                     BorderBrush="{DynamicResource GoldBrush}"
                     BorderThickness="1" CornerRadius="10" Padding="14,10">
-                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource DeepNavyBrush}" />
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource DeepNavyBrush}" TextWrapping="Wrap" />
             </Border>
 
             <!-- CARD 1: ITS CREDENTIALS & SYNC -->
@@ -29,32 +29,74 @@
                     BorderBrush="{DynamicResource CardBorderBrush}"
                     BorderThickness="1.5" CornerRadius="14"
                     Padding="20" BoxShadow="0 4 12 0 #10000000">
-                <StackPanel Spacing="14">
+                <StackPanel Spacing="16">
                     <TextBlock Text="ITS Portal Credentials" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
                     <TextBlock Text="Your credentials are encrypted using native OS security (Keychain on macOS, DPAPI on Windows)."
                                FontSize="11" Foreground="#718096" TextWrapping="Wrap" />
 
+                    <!-- CREDENTIAL STATUS PILL / BADGE -->
+                    <Border IsVisible="{Binding IsCredentialsSaved}"
+                            Background="#E6F4EA" BorderBrush="#34A853"
+                            BorderThickness="1.2" CornerRadius="8" Padding="14,10">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️" FontSize="18" VerticalAlignment="Center" />
+                                <StackPanel Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <TextBlock Text="✓ Credentials Stored &amp; Encrypted" FontWeight="Bold" FontSize="13" Foreground="#137333" />
+                                        <TextBlock Text="{Binding StoredItsId, StringFormat='(ITS: {0})'}" FontWeight="SemiBold" FontSize="13" Foreground="#137333" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding StoredCredentialStatusText}" FontSize="11" Foreground="#3C4043" />
+                                </StackPanel>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Remove Credentials"
+                                    Command="{Binding ClearCredentialsCommand}"
+                                    Background="#FCE8E6" Foreground="#C5221F"
+                                    BorderBrush="#F28B82" BorderThickness="1"
+                                    CornerRadius="6" FontSize="11" FontWeight="SemiBold"
+                                    Padding="10,5" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
+                    <Border IsVisible="{Binding !IsCredentialsSaved}"
+                            Background="#FEF7E0" BorderBrush="#F9AB00"
+                            BorderThickness="1" CornerRadius="8" Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="ℹ️" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="No credentials currently stored in OS vault. Enter your ITS ID and password below and click Save."
+                                       FontSize="11" Foreground="#7A4B04" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- INPUT FIELDS -->
                     <StackPanel Spacing="6">
                         <TextBlock Text="ITS ID" FontSize="12" FontWeight="SemiBold" />
-                        <TextBox Text="{Binding ItsId}" PlaceholderText="e.g. 30300000" />
+                        <TextBox Text="{Binding ItsId}" PlaceholderText="e.g. 30300000" CornerRadius="8" />
                     </StackPanel>
 
                     <StackPanel Spacing="6">
                         <TextBlock Text="Password" FontSize="12" FontWeight="SemiBold" />
-                        <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="Enter your ITS password" />
+                        <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="Enter your ITS password" CornerRadius="8" />
                     </StackPanel>
 
-                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                    <!-- ACTIONS -->
+                    <WrapPanel Orientation="Horizontal" Margin="0,6,0,0">
                         <Button Content="Save Credentials"
                                 Command="{Binding SaveCredentialsCommand}"
-                                Padding="14,8" CornerRadius="8" FontWeight="SemiBold" />
+                                Padding="16,9" CornerRadius="8" FontWeight="SemiBold" Margin="0,0,10,10" />
 
                         <Button Content="🔄 Sync Jamia Timetable"
                                 Command="{Binding SyncJamiaScheduleCommand}"
                                 IsEnabled="{Binding !IsBusy}"
                                 Background="{DynamicResource EmeraldBrush}" Foreground="White"
-                                Padding="16,8" CornerRadius="8" FontWeight="Bold" />
-                    </StackPanel>
+                                Padding="16,9" CornerRadius="8" FontWeight="Bold" Margin="0,0,10,10" />
+
+                        <Button Content="📂 Import Timetable (.json / .xlsx)"
+                                Command="{Binding ImportTimetableFileCommand}"
+                                IsEnabled="{Binding !IsBusy}"
+                                Background="{DynamicResource SlateMutedBrush}"
+                                Padding="16,9" CornerRadius="8" FontWeight="SemiBold" Margin="0,0,10,10" />
+                    </WrapPanel>
                 </StackPanel>
             </Border>
 

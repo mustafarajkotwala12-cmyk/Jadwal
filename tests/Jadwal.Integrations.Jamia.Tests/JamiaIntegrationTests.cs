@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Jadwal.Application.Services;
 using Jadwal.Domain.Enums;
 using Jadwal.Integrations.Jamia;
 using Xunit;
@@ -72,5 +73,24 @@ public class JamiaIntegrationTests
         // base64url for '{"exp": 4102444800}' is 'eyJleHAiOiA0MTAyNDQ0ODAwfQ'
         var validToken = "header.eyJleHAiOiA0MTAyNDQ0ODAwfQ.signature";
         JwtValidator.IsTokenValid(validToken).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ExcelTimetableParser_ParsesActualExcelFileAccurately()
+    {
+        var excelPath = Path.Combine("..", "..", "..", "..", "..", "data", "TimeTable_3032130520.xlsx");
+        if (!File.Exists(excelPath)) return;
+
+        var snapshot = ExcelTimetableParser.Parse(excelPath);
+        snapshot.Should().NotBeNull();
+        snapshot.AcademicYear.Should().Contain("1447");
+        snapshot.Periods.Should().NotBeEmpty();
+
+        var mondayPeriods = snapshot.GetPeriodsForDay(JadwalDayOfWeek.Monday);
+        mondayPeriods.Should().NotBeEmpty();
+
+        var pt = mondayPeriods.FirstOrDefault(p => p.PeriodName == "(PT)");
+        pt.Should().NotBeNull();
+        pt!.Subject.Should().Be("Physical Training");
     }
 }

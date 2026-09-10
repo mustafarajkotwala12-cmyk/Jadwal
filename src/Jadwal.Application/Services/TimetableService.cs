@@ -50,7 +50,7 @@ public class TimetableService
         var freshRaw = await _provider.FetchCurrentTimetableAsync(forceLogin, ct);
         if (freshRaw == null)
         {
-            return Array.Empty<TimetableChangeRecord>();
+            throw new InvalidOperationException("Could not fetch timetable from Jamea Portal. Please verify your portal credentials or import a timetable file (.json / .xlsx).");
         }
 
         var oldSnapshot = await _timetableRepository.GetLatestSnapshotAsync(ct);
@@ -90,5 +90,15 @@ public class TimetableService
         await _timetableRepository.SaveSnapshotAsync(annotated, ct);
 
         return newChanges;
+    }
+
+    public async Task<int> SaveImportedSnapshotAsync(TimetableSnapshot snapshot, CancellationToken ct = default)
+    {
+        if (snapshot == null || snapshot.Periods.Count == 0)
+        {
+            throw new FormatException("The imported timetable contains no valid periods.");
+        }
+        await _timetableRepository.SaveSnapshotAsync(snapshot, ct);
+        return snapshot.Periods.Count;
     }
 }

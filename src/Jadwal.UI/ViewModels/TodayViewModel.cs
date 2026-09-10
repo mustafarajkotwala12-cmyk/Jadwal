@@ -97,6 +97,9 @@ public partial class TodayViewModel : ViewModelBase
     public ObservableCollection<object> Row1Items { get; } = new();
     public ObservableCollection<object> Row2Items { get; } = new();
 
+    private Avalonia.Threading.DispatcherTimer? _clockTimer;
+    private int _tickCount = 0;
+
     public TodayViewModel(
         DashboardService dashboardService,
         TaskService taskService,
@@ -107,16 +110,42 @@ public partial class TodayViewModel : ViewModelBase
         _taskService = taskService;
         _timetableService = timetableService;
         _timeProvider = timeProvider;
+        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt");
     }
 
     public async Task InitializeAsync()
     {
         await RefreshScheduleAsync();
+        StartClockTimer();
+    }
+
+    public void StartClockTimer()
+    {
+        if (_clockTimer == null)
+        {
+            _clockTimer = new Avalonia.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _clockTimer.Tick += (s, e) => OnTick();
+            _clockTimer.Start();
+        }
+    }
+
+    public void StopClockTimer()
+    {
+        _clockTimer?.Stop();
+        _clockTimer = null;
     }
 
     public void OnTick()
     {
         CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt");
+        _tickCount++;
+        if (_tickCount % 30 == 0)
+        {
+            _ = RefreshScheduleAsync();
+        }
     }
 
     [RelayCommand]

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Jadwal.Application.Interfaces;
+using Jadwal.Application.Services;
 using Jadwal.Domain.Models;
 
 namespace Jadwal.Infrastructure.Persistence;
@@ -151,9 +152,28 @@ public class JsonFileTimetableRepository : ITimetableRepository
         await _lock.WaitAsync(ct);
         try
         {
-            if (!File.Exists(_filePath)) return null;
-            await using var stream = File.OpenRead(_filePath);
-            return await JsonSerializer.DeserializeAsync<TimetableSnapshot>(stream, JsonOptions, ct);
+            if (!File.Exists(_filePath))
+            {
+                var seedSnapshot = await TryLoadSeedTimetableAsync(ct);
+                if (seedSnapshot != null)
+                {
+                    try
+                    {
+                        var tempPath = _filePath + ".tmp";
+                        await using (var stream = File.Create(tempPath))
+                        {
+                            await JsonSerializer.SerializeAsync(stream, seedSnapshot, JsonOptions, ct);
+                        }
+                        File.Move(tempPath, _filePath, overwrite: true);
+                    }
+                    catch { }
+                    return seedSnapshot;
+                }
+                return null;
+            }
+
+            await using var fileStream = File.OpenRead(_filePath);
+            return await JsonSerializer.DeserializeAsync<TimetableSnapshot>(fileStream, JsonOptions, ct);
         }
         catch
         {
@@ -163,6 +183,52 @@ public class JsonFileTimetableRepository : ITimetableRepository
         {
             _lock.Release();
         }
+    }
+
+    private static async Task<TimetableSnapshot?> TryLoadSeedTimetableAsync(CancellationToken ct)
+    {
+        // 1. Check local candidate paths
+        var candidatePaths = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "data", "timetable.json"),
+            Path.Combine(AppContext.BaseDirectory, "timetable.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "timetable.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "timetable.json")
+        };
+
+        foreach (var path in candidatePaths)
+        {
+            if (File.Exists(path))
+            {
+                try
+                {
+                    var json = await File.ReadAllTextAsync(path, ct);
+                    return TimetableJsonParser.ParseJson(json);
+                }
+                catch { }
+            }
+        }
+
+        // 2. Check embedded resource in assembly
+        try
+        {
+            var assembly = typeof(JsonFileTimetableRepository).Assembly;
+            var resourceName = assembly.GetManifestResourceNames()
+                .FirstOrDefault(n => n.EndsWith("timetable.json", StringComparison.OrdinalIgnoreCase));
+            if (resourceName != null)
+            {
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    using var reader = new StreamReader(stream);
+                    var json = await reader.ReadToEndAsync(ct);
+                    return TimetableJsonParser.ParseJson(json);
+                }
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     public async Task SaveSnapshotAsync(TimetableSnapshot snapshot, CancellationToken ct = default)

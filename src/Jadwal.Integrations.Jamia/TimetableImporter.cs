@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Jadwal.Application.Services;
 using Jadwal.Domain.Enums;
 using Jadwal.Domain.Models;
 
@@ -27,53 +28,18 @@ public class RawPeriodEntry
 
 public class TimetableImporter
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
     public TimetableSnapshot ImportFromJson(string json)
     {
-        var payload = JsonSerializer.Deserialize<RawTimetablePayload>(json, JsonOptions);
-        if (payload == null)
-        {
-            throw new FormatException("Failed to deserialize timetable JSON payload.");
-        }
-
-        var rawList = payload.entries ?? payload.periods ?? new List<RawPeriodEntry>();
-        var normalizedPeriods = new List<PeriodOccurrence>();
-
-        foreach (var raw in rawList)
-        {
-            var day = JadwalDayOfWeekExtensions.ParseFromDayString(raw.day ?? string.Empty);
-            var dateStr = (raw.date ?? string.Empty).Trim();
-            var periodName = (raw.period ?? string.Empty).Trim();
-            var startTime = (raw.startTime ?? string.Empty).Trim();
-            var endTime = (raw.endTime ?? string.Empty).Trim();
-            var subject = (raw.subject ?? string.Empty).Trim();
-            var details = (raw.details ?? string.Empty).Trim();
-
-            normalizedPeriods.Add(new PeriodOccurrence(
-                id: null, // Computed deterministically
-                day: day,
-                dateString: dateStr,
-                periodName: periodName,
-                startTime: startTime,
-                endTime: endTime,
-                subject: subject,
-                details: details
-            ));
-        }
-
-        return new TimetableSnapshot(
-            academicYear: payload.academicYear ?? string.Empty,
-            weekNumber: payload.weekNumber,
-            periods: normalizedPeriods
-        );
+        return TimetableJsonParser.ParseJson(json);
     }
 
     public async Task<TimetableSnapshot> ImportFromFileAsync(string filePath, CancellationToken ct = default)
     {
+        if (filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+        {
+            return await Task.Run(() => ExcelTimetableParser.Parse(filePath), ct);
+        }
+
         var json = await File.ReadAllTextAsync(filePath, ct);
         return ImportFromJson(json);
     }

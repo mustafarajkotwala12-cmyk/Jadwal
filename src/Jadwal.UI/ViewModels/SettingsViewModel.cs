@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jadwal.Application.Interfaces;
 using Jadwal.Application.Services;
+using Jadwal.Domain.Models;
 
 namespace Jadwal.UI.ViewModels;
 
@@ -18,6 +19,15 @@ public partial class SettingsViewModel : ViewModelBase
     private string _password = string.Empty;
 
     [ObservableProperty]
+    private bool _isCredentialsSaved = false;
+
+    [ObservableProperty]
+    private string _storedItsId = string.Empty;
+
+    [ObservableProperty]
+    private string _storedCredentialStatusText = string.Empty;
+
+    [ObservableProperty]
     private string _statusMessage = string.Empty;
 
     [ObservableProperty]
@@ -28,6 +38,8 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _migrationReport = string.Empty;
+
+    public Func<Task<string?>>? PickFileHandler { get; set; }
 
     public SettingsViewModel(
         ISecureStorage secureStorage,
@@ -41,8 +53,31 @@ public partial class SettingsViewModel : ViewModelBase
 
     public async Task InitializeAsync()
     {
-        ItsId = await _secureStorage.GetSecretAsync("its_id") ?? string.Empty;
-        Password = await _secureStorage.GetSecretAsync("its_password") ?? string.Empty;
+        var savedId = await _secureStorage.GetSecretAsync("its_id") ?? string.Empty;
+        var savedPass = await _secureStorage.GetSecretAsync("its_password") ?? string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(savedId))
+        {
+            ItsId = savedId;
+            StoredItsId = savedId;
+            IsCredentialsSaved = true;
+            StoredCredentialStatusText = OperatingSystem.IsWindows()
+                ? "Credentials Encrypted & Secured in Windows DPAPI Vault"
+                : OperatingSystem.IsMacOS()
+                    ? "Credentials Encrypted & Secured in Apple Keychain"
+                    : "Credentials Encrypted & Secured in OS Vault";
+        }
+        else
+        {
+            IsCredentialsSaved = false;
+            StoredItsId = string.Empty;
+            StoredCredentialStatusText = "No credentials currently saved in OS vault";
+        }
+
+        if (!string.IsNullOrWhiteSpace(savedPass))
+        {
+            Password = savedPass;
+        }
     }
 
     [RelayCommand]
@@ -61,7 +96,32 @@ public partial class SettingsViewModel : ViewModelBase
             await _secureStorage.SetSecretAsync("its_password", Password);
         }
 
-        StatusMessage = "Credentials saved securely.";
+        StoredItsId = ItsId.Trim();
+        IsCredentialsSaved = true;
+        StoredCredentialStatusText = OperatingSystem.IsWindows()
+            ? "Credentials Encrypted & Secured in Windows DPAPI Vault"
+            : OperatingSystem.IsMacOS()
+                ? "Credentials Encrypted & Secured in Apple Keychain"
+                : "Credentials Encrypted & Secured in OS Vault";
+
+        StatusMessage = $"Credentials for ITS {StoredItsId} saved and encrypted in OS vault.";
+        IsSuccess = true;
+    }
+
+    [RelayCommand]
+    public async Task ClearCredentialsAsync()
+    {
+        await _secureStorage.DeleteSecretAsync("its_id");
+        await _secureStorage.DeleteSecretAsync("its_password");
+        await _secureStorage.DeleteSecretAsync("jamea_access_token");
+
+        ItsId = string.Empty;
+        Password = string.Empty;
+        StoredItsId = string.Empty;
+        IsCredentialsSaved = false;
+        StoredCredentialStatusText = "No credentials currently saved in OS vault";
+
+        StatusMessage = "Stored credentials removed from OS vault.";
         IsSuccess = true;
     }
 
@@ -76,12 +136,59 @@ public partial class SettingsViewModel : ViewModelBase
         {
             await SaveCredentialsAsync();
             var changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
-            StatusMessage = $"Sync successful! Detected {changes.Count} new schedule changes.";
+            StatusMessage = $"Sync successful! Detected {changes.Count} schedule changes.";
             IsSuccess = true;
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Sync error: {ex.Message}";
+            StatusMessage = $"Sync notice: {ex.Message}";
+            IsSuccess = false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task ImportTimetableFileAsync(string? explicitFilePath = null)
+    {
+        var filePath = explicitFilePath;
+        if (string.IsNullOrEmpty(filePath) && PickFileHandler != null)
+        {
+            filePath = await PickFileHandler();
+        }
+
+        if (string.IsNullOrEmpty(filePath))
+        {
+            return;
+        }
+
+        IsBusy = true;
+        StatusMessage = $"Importing timetable from {Path.GetFileName(filePath)}...";
+        IsSuccess = false;
+
+        try
+        {
+            TimetableSnapshot snapshot;
+            if (filePath.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            {
+                snapshot = ExcelTimetableParser.Parse(filePath);
+            }
+            else
+            {
+                var json = await File.ReadAllTextAsync(filePath);
+                snapshot = TimetableJsonParser.ParseJson(json);
+            }
+
+            var count = await _timetableService.SaveImportedSnapshotAsync(snapshot);
+            StatusMessage = $"Timetable imported successfully! Loaded {count} class periods from {Path.GetFileName(filePath)}.";
+            IsSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Import error: {ex.Message}";
+            IsSuccess = false;
         }
         finally
         {
