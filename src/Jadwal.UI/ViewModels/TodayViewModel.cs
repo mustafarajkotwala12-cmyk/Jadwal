@@ -145,6 +145,12 @@ public class BreakPillItemViewModel
         Break.Name.Contains("Lunch") ? "Lunch &\nNamaz" :
         Break.Name.Contains("Recess") ? "Recess" : Break.Name;
 
+    public string Icon => (Break.Name.Contains("Lunch", StringComparison.OrdinalIgnoreCase) || Break.Name.Contains("Namaz", StringComparison.OrdinalIgnoreCase)) ? "🕌" :
+        Break.Name.Contains("Morning", StringComparison.OrdinalIgnoreCase) ? "🌅" :
+        Break.Name.Contains("Recess", StringComparison.OrdinalIgnoreCase) ? "☕" : "⏸️";
+
+    public string TimeRange => $"{Break.StartTime} – {Break.EndTime}";
+
     public string DurationFormatted => ScheduleTimelineBuilder.FormatDuration(Break.DurationMinutes);
 }
 

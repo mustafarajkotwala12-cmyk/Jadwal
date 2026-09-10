@@ -26,8 +26,8 @@ public static class FatimidPalette
         EndPoint = new Avalonia.RelativePoint(1, 1, Avalonia.RelativeUnit.Relative),
         GradientStops = new GradientStops
         {
-            new(Color.Parse("#1F8AC9"), 0.0),
-            new(Color.Parse("#145B96"), 1.0)
+            new(Color.Parse("#0B4F39"), 0.0),
+            new(Color.Parse("#167154"), 1.0)
         }
     };
 }

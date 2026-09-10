@@ -16,7 +16,7 @@
             Margin="4">
         <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="8" VerticalAlignment="Center" HorizontalAlignment="Center">
             <!-- Icon -->
-            <TextBlock Grid.Row="0" Text="☕" FontSize="18"
+            <TextBlock Grid.Row="0" Text="{Binding Icon}" FontSize="18"
                        HorizontalAlignment="Center" Margin="0,0,0,4" />
 
             <!-- Stacked Name -->
@@ -40,7 +40,7 @@
 
             <!-- Time Range -->
             <TextBlock Grid.Row="3"
-                       Text="{Binding Break.StartTime, StringFormat='{}{0} -'}"
+                       Text="{Binding TimeRange}"
                        FontSize="9" Foreground="#A0AEC0"
                        TextAlignment="Center" />
         </Grid>
