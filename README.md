@@ -51,7 +51,7 @@ python3 -m playwright install chromium
 ```
 
 ### 2. Run the App
-- **Download the latest release:** Download `SWIFT-v1.0.0-macOS.zip` from [Releases](https://github.com/<YOUR_USERNAME>/JameaHelper/releases).
+- **Download the latest release:** Download `SWIFT-v1.0.0-macOS.zip` from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
 - Unzip and double-click **`SWIFT.app`** (or move it to `/Applications`).
 - Click **"Sync"** to log in through ITS and import your live weekly schedule.
 
