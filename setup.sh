@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Setting up Jamea Helper & SWIFT dependencies..."
+echo "🚀 Setting up Jamea Helper & Jadwal dependencies..."
 
 # Verify Python 3
 if ! command -v python3 &> /dev/null; then
@@ -17,4 +17,4 @@ echo "🌐 Installing Playwright Chromium browser binary..."
 python3 -m playwright install chromium
 
 echo "✅ Environment setup complete!"
-echo "You can now run SWIFT.app or sync your timetable."
+echo "You can now run Jadwal.app or sync your timetable."

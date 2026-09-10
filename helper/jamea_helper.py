@@ -22,7 +22,7 @@ else:
     if repo_data_dir.exists() or not str(Path(__file__)).endswith(".app/Contents/Resources/helper/jamea_helper.py"):
         DATA_DIR = repo_data_dir
     else:
-        DATA_DIR = Path.home() / "Library" / "Application Support" / "SWIFT" / "data"
+        DATA_DIR = Path.home() / "Library" / "Application Support" / "Jadwal" / "data"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
