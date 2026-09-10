@@ -93,4 +93,71 @@ public class JamiaIntegrationTests
         pt.Should().NotBeNull();
         pt!.Subject.Should().Be("Physical Training");
     }
+
+    [Fact]
+    public void JwtValidator_ExtractsItsIdCorrectly()
+    {
+        // {"itsId": "30711980", "exp": 4102444800} -> eyJpdHNJZCI6ICIzMDcxMTk4MCIsICJleHAiOiA0MTAyNDQ0ODAwfQ
+        var tokenWithItsId = "header.eyJpdHNJZCI6ICIzMDcxMTk4MCIsICJleHAiOiA0MTAyNDQ0ODAwfQ.signature";
+        JwtValidator.GetTokenItsId(tokenWithItsId).Should().Be("30711980");
+
+        // {"studentITSID": "30327222", "exp": 4102444800} -> eyJzdHVkZW50SVRTSUQiOiAiMzAzMjcyMjIiLCAiZXhwIjogNDEwMjQ0NDgwMH0
+        var tokenWithStudentItsId = "header.eyJzdHVkZW50SVRTSUQiOiAiMzAzMjcyMjIiLCAiZXhwIjogNDEwMjQ0NDgwMH0.signature";
+        JwtValidator.GetTokenItsId(tokenWithStudentItsId).Should().Be("30327222");
+
+        // No itsId
+        var tokenWithoutItsId = "header.eyJleHAiOiA0MTAyNDQ0ODAwfQ.signature";
+        JwtValidator.GetTokenItsId(tokenWithoutItsId).Should().BeNull();
+
+        // Null / Malformed
+        JwtValidator.GetTokenItsId(null).Should().BeNull();
+        JwtValidator.GetTokenItsId("invalid").Should().BeNull();
+    }
+
+    [Fact]
+    public async Task JamiaTimetableProvider_RejectsTokenForDifferentItsId()
+    {
+        var mockStorage = new TestSecureStorage();
+        // User is configured with non-matching ITS ID 99999999
+        await mockStorage.SetSecretAsync("its_id", "99999999");
+        // Stored token belongs to 30327222
+        var foreignToken = "header.eyJpdHNJZCI6ICIzMDMyNzIyMiIsICJleHAiOiA0MTAyNDQ0ODAwfQ.sig";
+        await mockStorage.SetSecretAsync("jamea_access_token", foreignToken);
+
+        var provider = new JamiaTimetableProvider(mockStorage, "/tmp/nonexistent");
+        var token = await provider.GetAccessTokenAsync();
+
+        // Must reject foreign token!
+        token.Should().BeNull();
+
+        // Stored token matching 99999999
+        var ownToken = "header.eyJpdHNJZCI6ICI5OTk5OTk5OSIsICJleHAiOiA0MTAyNDQ0ODAwfQ.sig";
+        await mockStorage.SetSecretAsync("jamea_access_token", ownToken);
+
+        var validToken = await provider.GetAccessTokenAsync();
+        validToken.Should().Be(ownToken);
+    }
+}
+
+internal class TestSecureStorage : Jadwal.Application.Interfaces.ISecureStorage
+{
+    private readonly Dictionary<string, string> _store = new();
+
+    public Task<string?> GetSecretAsync(string key, CancellationToken ct = default)
+    {
+        _store.TryGetValue(key, out var val);
+        return Task.FromResult<string?>(val);
+    }
+
+    public Task SetSecretAsync(string key, string value, CancellationToken ct = default)
+    {
+        _store[key] = value;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteSecretAsync(string key, CancellationToken ct = default)
+    {
+        _store.Remove(key);
+        return Task.CompletedTask;
+    }
 }

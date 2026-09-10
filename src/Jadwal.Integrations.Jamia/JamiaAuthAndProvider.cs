@@ -41,6 +41,42 @@ public static class JwtValidator
             return false;
         }
     }
+
+    public static string? GetTokenItsId(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token)) return null;
+        var parts = token.Split('.');
+        if (parts.Length != 3) return null;
+
+        try
+        {
+            var payload = parts[1];
+            payload = payload.Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4)
+            {
+                case 2: payload += "=="; break;
+                case 3: payload += "="; break;
+            }
+
+            var bytes = Convert.FromBase64String(payload);
+            var json = Encoding.UTF8.GetString(bytes);
+            using var doc = JsonDocument.Parse(json);
+
+            if (doc.RootElement.TryGetProperty("itsId", out var itsProp))
+            {
+                return itsProp.ValueKind == JsonValueKind.Number ? itsProp.GetInt64().ToString() : itsProp.GetString();
+            }
+            if (doc.RootElement.TryGetProperty("studentITSID", out var sItsProp))
+            {
+                return sItsProp.ValueKind == JsonValueKind.Number ? sItsProp.GetInt64().ToString() : sItsProp.GetString();
+            }
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 public class JamiaTimetableProvider : IJamiaTimetableProvider
@@ -57,10 +93,19 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
 
     public async Task<string?> GetAccessTokenAsync(CancellationToken ct = default)
     {
+        string? expectedItsId = null;
         if (_secureStorage != null)
         {
+            expectedItsId = await _secureStorage.GetSecretAsync("its_id", ct);
             var token = await _secureStorage.GetSecretAsync("jamea_access_token", ct);
-            if (JwtValidator.IsTokenValid(token)) return token;
+            if (JwtValidator.IsTokenValid(token))
+            {
+                var tokenItsId = JwtValidator.GetTokenItsId(token);
+                if (string.IsNullOrEmpty(expectedItsId) || tokenItsId == expectedItsId)
+                {
+                    return token;
+                }
+            }
         }
 
         // Check local token file
@@ -86,7 +131,14 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
                     if (doc.RootElement.TryGetProperty("access_token", out var tok))
                     {
                         var t = tok.GetString();
-                        if (JwtValidator.IsTokenValid(t)) return t;
+                        if (JwtValidator.IsTokenValid(t))
+                        {
+                            var tokenItsId = JwtValidator.GetTokenItsId(t);
+                            if (string.IsNullOrEmpty(expectedItsId) || tokenItsId == expectedItsId)
+                            {
+                                return t;
+                            }
+                        }
                     }
                 }
                 catch { }
@@ -104,18 +156,6 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
 
     public async Task<TimetableSnapshot?> FetchCurrentTimetableAsync(bool forceLogin = false, CancellationToken ct = default)
     {
-        // 1. If we have a valid token, try direct HTTPS API fetch (pure C#, no Python needed)
-        var token = await GetAccessTokenAsync(ct);
-        if (!string.IsNullOrEmpty(token))
-        {
-            var directSnapshot = await FetchViaDirectApiAsync(token, ct);
-            if (directSnapshot != null)
-            {
-                return directSnapshot;
-            }
-        }
-
-        // 2. Check candidate local data files
         var candidateDataPaths = new[]
         {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "timetable.json"),
@@ -127,7 +167,42 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
         };
 
-        // 2. Check candidate local data files as fallback
+        // 1. If we have a valid token matching our configured ITS ID and not explicitly forcing re-login, try direct HTTPS API fetch
+        var token = await GetAccessTokenAsync(ct);
+        if (!string.IsNullOrEmpty(token) && !forceLogin)
+        {
+            var directSnapshot = await FetchViaDirectApiAsync(token, ct);
+            if (directSnapshot != null)
+            {
+                return directSnapshot;
+            }
+        }
+
+        // 2. If token is missing, expired, belongs to another ITS ID, or fresh sync requested:
+        // Attempt live browser/portal bridge execution
+        try
+        {
+            var bridgeSnapshot = await ExecuteLegacyBridgeAsync(forceLogin || string.IsNullOrEmpty(token), candidateDataPaths, ct);
+            if (bridgeSnapshot != null)
+            {
+                return bridgeSnapshot;
+            }
+        }
+        catch (Exception ex)
+        {
+            if (forceLogin)
+            {
+                throw new InvalidOperationException($"Portal sync error: {ex.Message}", ex);
+            }
+        }
+
+        // 3. If fresh sync was requested and bridge could not complete, fail informatively rather than showing stale 0 changes
+        if (forceLogin)
+        {
+            throw new InvalidOperationException("Could not synchronize timetable from Jamia Portal. Please check your credentials or complete login in the browser window.");
+        }
+
+        // 4. Offline fallback: only use existing static data files if not explicitly performing a forced portal sync
         foreach (var path in candidateDataPaths)
         {
             if (File.Exists(path))
@@ -140,8 +215,7 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             }
         }
 
-        // 3. [LEGACY-BRIDGE]: When live browser login is needed on desktop
-        return await ExecuteLegacyBridgeAsync(forceLogin, candidateDataPaths, ct);
+        return null;
     }
 
     private async Task<TimetableSnapshot?> FetchViaDirectApiAsync(string token, CancellationToken ct)
@@ -264,32 +338,125 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         string[] candidateDataPaths,
         CancellationToken ct)
     {
-        var scriptCandidates = new[]
+        var scriptPath = ResolveHelperScriptPath(_workspaceDirectory);
+        if (scriptPath == null)
         {
-            Path.Combine(_workspaceDirectory, "helper", "jamea_helper.py"),
-            Path.Combine(Directory.GetCurrentDirectory(), "helper", "jamea_helper.py")
-        };
-
-        var scriptPath = scriptCandidates.FirstOrDefault(File.Exists);
-        if (scriptPath == null) return null;
+            throw new FileNotFoundException("Could not locate helper/jamea_helper.py in application package or workspace.");
+        }
 
         var pythonExe = ResolvePythonExecutable();
+        var workingDir = Path.GetDirectoryName(Path.GetDirectoryName(scriptPath)) ?? Directory.GetCurrentDirectory();
+
+        string? itsId = null;
+        string? itsPassword = null;
+        if (_secureStorage != null)
+        {
+            itsId = await _secureStorage.GetSecretAsync("its_id", ct);
+            itsPassword = await _secureStorage.GetSecretAsync("its_password", ct);
+        }
+
+        var arguments = forceLogin ? $"\"{scriptPath}\" --login" : $"\"{scriptPath}\"";
+        if (!string.IsNullOrEmpty(itsId))
+        {
+            arguments += $" --its-id \"{itsId}\"";
+        }
+
         var psi = new ProcessStartInfo
         {
             FileName = pythonExe,
-            Arguments = forceLogin ? $"\"{scriptPath}\" --login" : $"\"{scriptPath}\"",
-            WorkingDirectory = Path.GetDirectoryName(Path.GetDirectoryName(scriptPath)) ?? Directory.GetCurrentDirectory(),
+            Arguments = arguments,
+            WorkingDirectory = workingDir,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
 
+        var pythonDir = Path.GetDirectoryName(pythonExe) ?? "";
+        var existingPath = psi.EnvironmentVariables.ContainsKey("PATH") ? psi.EnvironmentVariables["PATH"] : "";
+        psi.EnvironmentVariables["PATH"] = $"{pythonDir}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:{existingPath}";
+
+        if (!string.IsNullOrEmpty(itsId))
+        {
+            psi.EnvironmentVariables["ITS_ID"] = itsId;
+        }
+        if (!string.IsNullOrEmpty(itsPassword))
+        {
+            psi.EnvironmentVariables["ITS_PASSWORD"] = itsPassword;
+        }
+
+        if (workingDir.Contains(".app/Contents/Resources"))
+        {
+            var appDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data");
+            Directory.CreateDirectory(appDataDir);
+            psi.EnvironmentVariables["JAMEA_DATA_DIR"] = appDataDir;
+        }
+
         using var process = new Process { StartInfo = psi };
+        var errorBuilder = new StringBuilder();
+        var outputBuilder = new StringBuilder();
+
+        process.OutputDataReceived += (_, e) =>
+        {
+            if (e.Data != null) outputBuilder.AppendLine(e.Data);
+        };
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null) errorBuilder.AppendLine(e.Data);
+        };
+
         process.Start();
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
         await process.WaitForExitAsync(ct);
 
-        foreach (var path in candidateDataPaths)
+        if (process.ExitCode != 0)
+        {
+            var err = errorBuilder.ToString().Trim();
+            var outMsg = outputBuilder.ToString().Trim();
+            var detail = !string.IsNullOrEmpty(err) ? err : outMsg;
+            throw new InvalidOperationException($"Portal synchronization failed (exit code {process.ExitCode}): {detail}");
+        }
+
+        // Check if helper generated or updated token file; persist to secure storage
+        try
+        {
+            var tokenFileCandidates = new[]
+            {
+                Path.Combine(workingDir, "data", "jamea_token.json"),
+                Path.Combine(workingDir, "Data", "jamea_token.json"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "jamea_token.json")
+            };
+            foreach (var tf in tokenFileCandidates)
+            {
+                if (File.Exists(tf))
+                {
+                    var j = await File.ReadAllTextAsync(tf, ct);
+                    using var d = JsonDocument.Parse(j);
+                    if (d.RootElement.TryGetProperty("access_token", out var tok))
+                    {
+                        var tStr = tok.GetString();
+                        if (!string.IsNullOrEmpty(tStr) && JwtValidator.IsTokenValid(tStr) && _secureStorage != null)
+                        {
+                            await _secureStorage.SetSecretAsync("jamea_access_token", tStr, ct);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+        catch { }
+
+        // Import the newly generated snapshot
+        var freshFileCandidates = new[]
+        {
+            Path.Combine(workingDir, "data", "timetable.json"),
+            Path.Combine(workingDir, "Data", "timetable.json"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
+        }.Concat(candidateDataPaths);
+
+        foreach (var path in freshFileCandidates)
         {
             if (File.Exists(path))
             {
@@ -299,6 +466,63 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
                 }
                 catch { }
             }
+        }
+
+        return null;
+    }
+
+    private static string? ResolveHelperScriptPath(string workspaceDir)
+    {
+        var envDir = Environment.GetEnvironmentVariable("JAMEA_HELPER_DIR");
+        if (!string.IsNullOrEmpty(envDir))
+        {
+            var p1 = Path.Combine(envDir, "helper", "jamea_helper.py");
+            if (File.Exists(p1)) return p1;
+            var p2 = Path.Combine(envDir, "jamea_helper.py");
+            if (File.Exists(p2)) return p2;
+        }
+
+        var baseDir = AppContext.BaseDirectory;
+        var directCandidates = new[]
+        {
+            Path.Combine(baseDir, "..", "Resources", "helper", "jamea_helper.py"),
+            Path.Combine(baseDir, "Resources", "helper", "jamea_helper.py"),
+            Path.Combine(baseDir, "helper", "jamea_helper.py"),
+            Path.Combine(workspaceDir, "helper", "jamea_helper.py"),
+            Path.Combine(Directory.GetCurrentDirectory(), "helper", "jamea_helper.py")
+        };
+
+        foreach (var cand in directCandidates)
+        {
+            try
+            {
+                var full = Path.GetFullPath(cand);
+                if (File.Exists(full)) return full;
+            }
+            catch { }
+        }
+
+        var searchBases = new[] { baseDir, Directory.GetCurrentDirectory() };
+        foreach (var sb in searchBases)
+        {
+            var dir = new DirectoryInfo(sb);
+            for (int i = 0; i < 6 && dir != null; i++)
+            {
+                var cand = Path.Combine(dir.FullName, "helper", "jamea_helper.py");
+                if (File.Exists(cand)) return cand;
+                dir = dir.Parent;
+            }
+        }
+
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var known = new[]
+        {
+            Path.Combine(home, "JameaHelper", "helper", "jamea_helper.py"),
+            "/Users/mustafarajkotwala/JameaHelper/helper/jamea_helper.py"
+        };
+        foreach (var k in known)
+        {
+            if (File.Exists(k)) return k;
         }
 
         return null;

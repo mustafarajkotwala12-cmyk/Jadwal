@@ -148,13 +148,21 @@ public partial class SettingsViewModel : ViewModelBase
             return;
         }
 
-        await _secureStorage.SetSecretAsync("its_id", ItsId.Trim());
+        var trimmedId = ItsId.Trim();
+        var oldId = await _secureStorage.GetSecretAsync("its_id");
+        if (!string.IsNullOrEmpty(oldId) && !string.Equals(oldId, trimmedId, StringComparison.OrdinalIgnoreCase))
+        {
+            // ITS ID changed! Invalidate any previous session token for the old user
+            await _secureStorage.DeleteSecretAsync("jamea_access_token");
+        }
+
+        await _secureStorage.SetSecretAsync("its_id", trimmedId);
         if (!string.IsNullOrEmpty(Password))
         {
             await _secureStorage.SetSecretAsync("its_password", Password);
         }
 
-        StoredItsId = ItsId.Trim();
+        StoredItsId = trimmedId;
         IsCredentialsSaved = true;
         StoredCredentialStatusText = OperatingSystem.IsWindows()
             ? "Credentials Encrypted & Secured in Windows DPAPI Vault"
@@ -187,7 +195,7 @@ public partial class SettingsViewModel : ViewModelBase
     public async Task SyncJamiaScheduleAsync()
     {
         IsBusy = true;
-        StatusMessage = "Syncing timetable from Jamia Portal...";
+        StatusMessage = "Connecting to Jamia Portal. If a login window appears, please complete authentication...";
         IsSuccess = false;
 
         try
@@ -198,7 +206,10 @@ public partial class SettingsViewModel : ViewModelBase
             }
 
             var changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
-            StatusMessage = $"Sync successful! Detected {changes.Count} schedule changes.";
+            var idLabel = !string.IsNullOrEmpty(StoredItsId) ? $" for ITS {StoredItsId}" : "";
+            StatusMessage = changes.Count > 0
+                ? $"Sync successful! Updated timetable with {changes.Count} changes{idLabel}."
+                : $"Sync complete! Your timetable is up to date (0 changes detected{idLabel}).";
             IsSuccess = true;
         }
         catch (Exception ex)

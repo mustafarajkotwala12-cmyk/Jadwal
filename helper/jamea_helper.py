@@ -84,7 +84,7 @@ def save_token(token: str) -> None:
     os.chmod(TOKEN_FILE, stat.S_IRUSR | stat.S_IWUSR)
 
 
-def load_token() -> str | None:
+def load_token(expected_its_id: str | None = None) -> str | None:
     """
     Load a previously saved Jamea JWT if it exists and has not expired.
     Deletes any expired token files encountered.
@@ -105,6 +105,15 @@ def load_token() -> str | None:
             token = data.get("access_token")
             if isinstance(token, str) and token:
                 if is_jwt_valid(token):
+                    if expected_its_id:
+                        try:
+                            claims = decode_jwt_claims(token)
+                            claim_its = str(claims.get("itsId") or claims.get("studentITSID") or "")
+                            if claim_its and claim_its != expected_its_id:
+                                print(f"Cached session is for ITS {claim_its}, but ITS {expected_its_id} was requested. Discarding cache...")
+                                continue
+                        except Exception:
+                            continue
                     return token
                 else:
                     print(f"Expired session token found in {path}. Removing...")
@@ -685,12 +694,28 @@ async def main():
 
         force_login = "--login" in sys.argv or "--force-login" in sys.argv or os.environ.get("FORCE_LOGIN") == "1"
 
+        target_its_id = None
+        if "--its-id" in sys.argv:
+            idx = sys.argv.index("--its-id")
+            if idx + 1 < len(sys.argv):
+                target_its_id = sys.argv[idx + 1].strip()
+        if not target_its_id:
+            target_its_id = os.environ.get("ITS_ID", "").strip() or None
+
+        target_password = None
+        if "--password" in sys.argv:
+            idx = sys.argv.index("--password")
+            if idx + 1 < len(sys.argv):
+                target_password = sys.argv[idx + 1].strip()
+        if not target_password:
+            target_password = os.environ.get("ITS_PASSWORD", "").strip() or None
+
         if force_login:
             print("ITS login requested. Resetting saved credentials...")
             delete_token()
             cached_token = None
         else:
-            cached_token = load_token()
+            cached_token = load_token(expected_its_id=target_its_id)
 
         active_token = None
         claims = None
@@ -809,6 +834,21 @@ async def main():
                     if raw_token and isinstance(raw_token, str) and is_jwt_valid(raw_token):
                         token = raw_token
                         break
+
+                    # Autofill ITS credentials if on an ITS login page and fields are empty
+                    if target_its_id:
+                        try:
+                            user_input = await page.query_selector("input[name='txtUserName'], #txtUserName")
+                            if user_input:
+                                cur_val = await user_input.input_value()
+                                if not cur_val:
+                                    await user_input.fill(target_its_id)
+                                    if target_password:
+                                        pass_input = await page.query_selector("input[name='txtPassword'], #txtPassword")
+                                        if pass_input:
+                                            await pass_input.fill(target_password)
+                        except Exception:
+                            pass
                 except Exception as e:
                     if "closed" in str(e).lower():
                         raise
