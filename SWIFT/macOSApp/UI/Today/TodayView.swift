@@ -3,13 +3,13 @@ import SwiftCore
 
 public struct TodayView: View {
     @EnvironmentObject var env: AppEnvironment
-    @State private var showingQuickAddTask: Bool = false
-    @State private var quickTaskTitle: String = ""
+    @State private var currentTime: Date = Date()
+    private let liveTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     public init() {}
 
     private var currentDayOfWeek: DayOfWeek {
-        let weekday = Calendar.current.component(.weekday, from: Date())
+        let weekday = Calendar.current.component(.weekday, from: currentTime)
         switch weekday {
         case 1: return .sunday
         case 2: return .monday
@@ -26,336 +26,176 @@ public struct TodayView: View {
         env.timetableSnapshot?.periods(for: currentDayOfWeek) ?? []
     }
 
-    private var currentOrNextClass: (period: PeriodOccurrence, isCurrent: Bool)? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        let now = formatter.string(from: Date())
+    private var timelineItems: [ScheduleTimelineItem] {
+        ScheduleTimelineBuilder.buildTimeline(from: todayPeriods, currentTime: currentTime)
+    }
 
-        if let active = todayPeriods.first(where: { now >= $0.startTime && now <= $0.endTime }) {
-            return (active, true)
-        }
-        if let upcoming = todayPeriods.first(where: { now < $0.startTime }) {
-            return (upcoming, false)
-        }
-        return nil
+    private var columnSplit: (morning: [ScheduleTimelineItem], afternoon: [ScheduleTimelineItem]) {
+        ScheduleTimelineBuilder.splitIntoTwoColumns(items: timelineItems)
+    }
+
+    private var todayChanges: [TimetableChangeRecord] {
+        todayPeriods.compactMap { $0.changeRecord }.filter { !$0.isAcknowledged }
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                // Header Banner
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(Date().formatted(date: .complete, time: .omitted))
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
-                        Text("Today's Overview")
-                            .font(.system(.largeTitle, design: .rounded).bold())
-                    }
-
-                    Spacer()
-
-                    if let snapshot = env.timetableSnapshot {
-                        HStack(spacing: 8) {
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(snapshot.academicYear)
-                                    .font(.caption.bold())
-                                if let week = snapshot.weekNumber {
-                                    Text("Week #\(week)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(NSColor.controlBackgroundColor))
-                            )
-                        }
-                    }
-                }
-                .padding(.bottom, 4)
-
-                // Hero Card: Current or Next Class
-                if let focus = currentOrNextClass {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            Label(
-                                focus.isCurrent ? "CLASS IN SESSION" : "NEXT UP",
-                                systemImage: focus.isCurrent ? "record.circle" : "arrow.right.circle"
-                            )
-                            .font(.caption.bold())
-                            .foregroundStyle(focus.isCurrent ? Color.green : Color.accentColor)
-
-                            Spacer()
-
-                            Text("\(focus.period.startTime) – \(focus.period.endTime)")
-                                .font(.subheadline.bold().monospacedDigit())
-                                .foregroundStyle(.secondary)
-                        }
-
-                        HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(focus.period.subject)
-                                    .font(.title2.bold())
-                                    .foregroundStyle(.primary)
-
-                                if let change = focus.period.changeRecord {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                        Text(change.summaryMessage)
-                                    }
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.orange)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Capsule().fill(Color.orange.opacity(0.15)))
-                                }
-
-                                if !focus.period.details.isEmpty {
-                                    Text(focus.period.details)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-
-                            Spacer()
-
-                            Text(focus.period.periodName)
-                                .font(.caption.bold())
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(Capsule().fill(Color.accentColor.opacity(0.15)))
-                        }
-                    }
-                    .padding(16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color(NSColor.controlBackgroundColor))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(focus.isCurrent ? Color.green.opacity(0.4) : Color.accentColor.opacity(0.2), lineWidth: 1.5)
-                            )
-                            .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+        GeometryReader { proxy in
+            ScrollView(.vertical, showsIndicators: proxy.size.height < 680) {
+                VStack(spacing: 12) {
+                    // Header Date & Time Rail
+                    DateTimeRailView(
+                        todayPeriods: todayPeriods,
+                        currentDayOfWeek: currentDayOfWeek
                     )
-                }
 
-                // Today's Changes Banner (if any period today was changed)
-                let todayChangedPeriods = todayPeriods.compactMap { $0.changeRecord }
-                if !todayChangedPeriods.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "bell.badge.fill")
-                                .foregroundStyle(.orange)
-                            Text("Schedule Adjustments Today")
-                                .font(.headline.bold())
-                                .foregroundStyle(.orange)
-
-                            Spacer()
-
-                            Button("Dismiss") {
-                                Task { await env.dismissAllChanges() }
-                            }
-                            .font(.caption.bold())
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                        }
-
-                        ForEach(todayChangedPeriods) { change in
-                            HStack(spacing: 8) {
-                                Image(systemName: "exclamationmark.circle")
-                                    .foregroundStyle(.orange)
-                                Text(change.summaryMessage)
-                                    .font(.subheadline)
-                            }
-                        }
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(Color.orange.opacity(0.1))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(Color.orange.opacity(0.25), lineWidth: 1)
-                            )
-                    )
-                }
-
-                // Today's Timetable Section
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Label("Today's Schedule (\(currentDayOfWeek.rawValue))", systemImage: "clock")
-                            .font(.title3.bold())
-
-                        Spacer()
-
-                        Text("\(todayPeriods.count) periods")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    // Schedule adjustments banner (if any active changes today)
+                    if !todayChanges.isEmpty {
+                        changesBanner
                     }
 
+                    // Main Two-Column Class Timetable
                     if todayPeriods.isEmpty {
-                        HStack {
-                            Text("No classes scheduled for today.")
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                        }
-                        .padding()
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color(NSColor.controlBackgroundColor)))
+                        emptyDayView
                     } else {
-                        ForEach(todayPeriods) { period in
-                            HStack(spacing: 14) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(period.startTime)
-                                        .font(.headline.monospacedDigit())
-                                    Text(period.endTime)
-                                        .font(.caption.monospacedDigit())
-                                        .foregroundStyle(.secondary)
+                        HStack(alignment: .top, spacing: 14) {
+                            // Column 1: Morning Sessions
+                            VStack(alignment: .leading, spacing: 8) {
+                                columnHeader(
+                                    title: "Morning Sessions",
+                                    icon: "sun.and.horizon.fill",
+                                    color: FatimidPalette.emerald
+                                )
+
+                                ForEach(columnSplit.morning) { item in
+                                    renderTimelineItem(item)
                                 }
-                                .frame(width: 60, alignment: .leading)
-
-                                Divider()
-
-                                VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 8) {
-                                        Text(period.subject)
-                                            .font(.body.weight(.medium))
-
-                                        if let change = period.changeRecord {
-                                            HStack(spacing: 3) {
-                                                Image(systemName: "exclamationmark.triangle.fill")
-                                                Text(change.summaryMessage)
-                                            }
-                                            .font(.caption2.bold())
-                                            .foregroundStyle(.orange)
-                                            .padding(.horizontal, 6)
-                                            .padding(.vertical, 2)
-                                            .background(Capsule().fill(Color.orange.opacity(0.15)))
-                                        }
-                                    }
-
-                                    if !period.details.isEmpty {
-                                        Text(period.details)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-
-                                Spacer()
-
-                                Text(period.periodName)
-                                    .font(.caption.bold())
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 3)
-                                    .background(Capsule().fill(Color.secondary.opacity(0.12)))
                             }
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(NSColor.controlBackgroundColor))
-                            )
+                            .frame(maxWidth: .infinity, alignment: .top)
+
+                            // Column 2: Afternoon Sessions
+                            VStack(alignment: .leading, spacing: 8) {
+                                columnHeader(
+                                    title: "Afternoon Sessions",
+                                    icon: "sun.max.fill",
+                                    color: FatimidPalette.bronze
+                                )
+
+                                ForEach(columnSplit.afternoon) { item in
+                                    renderTimelineItem(item)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .top)
                         }
                     }
                 }
+                .padding(.horizontal, 18)
+                .padding(.vertical, 14)
+                .frame(minHeight: proxy.size.height, alignment: .top)
+            }
+        }
+        .onReceive(liveTicker) { date in
+            currentTime = date
+        }
+    }
 
-                // Today's Tasks Section
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Label("Tasks & Action Items", systemImage: "checklist")
-                            .font(.title3.bold())
+    // MARK: - Column Header
+    private func columnHeader(title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(color)
 
-                        Spacer()
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .tracking(0.6)
 
-                        Button(action: { showingQuickAddTask.toggle() }) {
-                            Label("New Task", systemImage: "plus")
-                                .font(.caption.bold())
-                        }
-                        .buttonStyle(.bordered)
-                    }
+            Spacer()
+        }
+        .padding(.horizontal, 4)
+        .padding(.top, 2)
+    }
 
-                    if showingQuickAddTask {
-                        HStack(spacing: 8) {
-                            TextField("Enter task title and press Return...", text: $quickTaskTitle)
-                                .textFieldStyle(.roundedBorder)
-                                .onSubmit {
-                                    let trimmed = quickTaskTitle.trimmingCharacters(in: .whitespaces)
-                                    guard !trimmed.isEmpty else { return }
-                                    Task {
-                                        await env.addTask(title: trimmed)
-                                        quickTaskTitle = ""
-                                        showingQuickAddTask = false
-                                    }
-                                }
+    // MARK: - Timeline Item Renderer
+    @ViewBuilder
+    private func renderTimelineItem(_ item: ScheduleTimelineItem) -> some View {
+        switch item {
+        case .classPeriod(let period, let status):
+            ClassCardView(period: period, status: status)
+        case .breakBlock(_, let name, let startTime, let endTime, let durationMinutes):
+            BreakCardView(
+                name: name,
+                startTime: startTime,
+                endTime: endTime,
+                durationMinutes: durationMinutes
+            )
+        }
+    }
 
-                            Button("Add") {
-                                let trimmed = quickTaskTitle.trimmingCharacters(in: .whitespaces)
-                                guard !trimmed.isEmpty else { return }
-                                Task {
-                                    await env.addTask(title: trimmed)
-                                    quickTaskTitle = ""
-                                    showingQuickAddTask = false
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .padding(10)
-                        .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor)))
-                    }
+    // MARK: - Changes Banner
+    private var changesBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.orange)
 
-                    let pendingTasks = env.tasks.filter { !$0.isCompleted }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Schedule Adjustments Detected")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.orange)
 
-                    if pendingTasks.isEmpty {
-                        HStack {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundStyle(.green)
-                            Text("All clear! No pending tasks.")
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(RoundedRectangle(cornerRadius: 10).fill(Color(NSColor.controlBackgroundColor)))
-                    } else {
-                        ForEach(pendingTasks) { task in
-                            HStack(spacing: 12) {
-                                Button(action: {
-                                    Task { await env.toggleTask(task) }
-                                }) {
-                                    Image(systemName: "circle")
-                                        .font(.title3)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
+                Text(todayChanges.map(\.summaryMessage).joined(separator: " • "))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(task.title)
-                                        .font(.body)
-                                    HStack(spacing: 8) {
-                                        if let subj = task.linkedSubject {
-                                            Label(subj, systemImage: "tag")
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                        if let disc = task.discrepancy, !disc.isDismissed {
-                                            Label("Slot changed to \(disc.newSubject)", systemImage: "exclamationmark.triangle.fill")
-                                                .font(.caption2.bold())
-                                                .foregroundStyle(.orange)
-                                        }
-                                    }
-                                }
+            Spacer()
 
-                                Spacer()
-
-                                PriorityBadge(priority: task.priority)
-                            }
-                            .padding(12)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(Color(NSColor.controlBackgroundColor)))
-                        }
-                    }
+            Button("Acknowledge") {
+                Task {
+                    await env.dismissAllChanges()
                 }
             }
-            .padding(24)
+            .buttonStyle(.bordered)
+            .controlSize(.small)
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.orange.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Empty Day View
+    private var emptyDayView: some View {
+        VStack(spacing: 12) {
+            Spacer(minLength: 40)
+
+            KhatamEightPointStar()
+                .stroke(FatimidPalette.bronze.opacity(0.4), lineWidth: 1.5)
+                .frame(width: 50, height: 50)
+
+            Text("No Classes Scheduled Today")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            Text("Take this time for review, hifz revision, or personal study.")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+
+            Spacer(minLength: 40)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(30)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(NSColor.controlBackgroundColor).opacity(0.5))
+        )
     }
 }

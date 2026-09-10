@@ -155,4 +155,68 @@ struct SwiftCoreTests {
         #expect(!task.isCompleted)
         #expect(task.completedAt == nil)
     }
+
+    @Test("ScheduleTimelineBuilder detects breaks and computes statuses")
+    func testScheduleTimelineBuilder() {
+        let p1 = PeriodOccurrence(
+            day: .monday,
+            dateString: "2026-09-07",
+            periodName: "Period 1",
+            startTime: "06:00",
+            endTime: "07:00",
+            subject: "Quran",
+            details: "Masjid"
+        )
+        let p2 = PeriodOccurrence(
+            day: .monday,
+            dateString: "2026-09-07",
+            periodName: "Period 2",
+            startTime: "08:50",
+            endTime: "09:25",
+            subject: "Fiqh",
+            details: "Room 101"
+        )
+        let p3 = PeriodOccurrence(
+            day: .monday,
+            dateString: "2026-09-07",
+            periodName: "Period 3",
+            startTime: "09:25",
+            endTime: "10:00",
+            subject: "Adab",
+            details: "Room 102"
+        )
+        let p4 = PeriodOccurrence(
+            day: .monday,
+            dateString: "2026-09-07",
+            periodName: "Period 4",
+            startTime: "12:40",
+            endTime: "13:15",
+            subject: "Hadith",
+            details: "Room 103"
+        )
+
+        let items = ScheduleTimelineBuilder.buildTimeline(from: [p1, p2, p3, p4])
+        // Expected items:
+        // 1. p1 (06:00 - 07:00)
+        // 2. Break (07:00 - 08:50) -> Morning Preparation (1h 50m)
+        // 3. p2 (08:50 - 09:25)
+        // 4. p3 (09:25 - 10:00, no break)
+        // 5. Break (10:00 - 12:40) -> Recess
+        // 6. p4 (12:40 - 13:15)
+        #expect(items.count == 6)
+
+        if case .breakBlock(_, let name, let start, let end, let dur) = items[1] {
+            #expect(name == "Morning Preparation")
+            #expect(start == "07:00")
+            #expect(end == "08:50")
+            #expect(dur == 110)
+            #expect(ScheduleTimelineBuilder.formatDuration(minutes: dur) == "1h 50m")
+        } else {
+            #expect(Bool(false), "Expected breakBlock at index 1")
+        }
+
+        let columns = ScheduleTimelineBuilder.splitIntoTwoColumns(items: items)
+        #expect(!columns.morning.isEmpty)
+        #expect(!columns.afternoon.isEmpty)
+    }
 }

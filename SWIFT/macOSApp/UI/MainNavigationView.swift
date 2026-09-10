@@ -1,7 +1,7 @@
 import SwiftUI
 
 public enum NavigationItem: String, CaseIterable, Identifiable {
-    case today = "Today"
+    case today = "Today Class Timetable"
     case timetable = "Timetable"
     case tasks = "Tasks"
     case settings = "Settings"

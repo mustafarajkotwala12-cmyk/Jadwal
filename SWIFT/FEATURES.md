@@ -53,11 +53,17 @@ This document tracks all features, capabilities, and system components incorpora
     - **Dismiss**: Clears the banner while keeping original task properties intact.
 
 ### 4. macOS Native User Interface (`macOSApp`)
-- **Today's Overview (`TodayView`)**:
-  - Real-time current day calculation and period matching.
-  - "Class In Session" / "Next Up" hero card with live status indicator.
-  - **Schedule Adjustments Banner**: Amber alert block highlighting all changes detected for the active day.
-  - Change pill badges (`⚠ Changed from [Old] to [New]`) directly on period schedule rows.
+- **Today Class Timetable (`TodayView`, `ClassCardView`, `BreakCardView`, `DateTimeRailView`)**:
+  - **No-Scroll Guarantee**: Two-column responsive card grid (Morning Sessions & Afternoon Sessions) designed to fit all 8–10 daily periods and breaks on standard macOS window heights without vertical scrolling.
+  - **Dominant Subject Typography**: Large, bold, scannable subject font readable from a distance.
+  - **Live Class Status Engine**: Automatically computes dynamic state (`Completed`, `In Progress` with emerald pulse indicator, `Starting Soon` with amber countdown pill, `Upcoming`, `Cancelled`, `Changed`).
+  - **Intelligent Chronological Break Blocks**: Context-aware gap calculation inserting minimal dashed break blocks (*Morning Preparation*, *Recess*, *Lunch & Namaz Break*).
+  - **3D Vertical-Axis Card Flip**: Flipping any card reveals linked tasks for that specific subject and period occurrence, with checkboxes for rapid completion and an inline quick `+ Add Task` field.
+  - **Accessibility**: Full keyboard navigation (Space/Return to flip) and instant toggle fallback for `accessibilityReduceMotion`.
+  - **Date & Time Rail**: Prominent day number, month, weekday, institutional Arabic day name, live ticking digital clock, and compact stats.
+  - **Restrained Fatimid Architectural Motifs**: Vector-rendered 8-pointed star (`KhatamEightPointStar`) watermarks, architectural dividers, and Fatimid emerald/bronze jewel palette.
+- **Schedule Adjustments Banner**:
+  - Amber alert block highlighting all changes detected for the active day with one-click acknowledgement.
   - Integrated quick task creation field.
 - **Weekly Timetable (`TimetableView`)**:
   - Segmented weekday selector (Monday through Saturday).
