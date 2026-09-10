@@ -97,7 +97,7 @@ public struct ClassCardView: View {
             // Subject name: Large, bold, readable from a distance
             HStack(alignment: .firstTextBaseline) {
                 Text(period.subject)
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(period.subject.containsArabic ? .kanzalLulu(size: 21) : .system(size: 17, weight: .bold, design: .rounded))
                     .foregroundStyle(status == .completed ? .secondary : .primary)
                     .lineLimit(1)
 
@@ -133,7 +133,7 @@ public struct ClassCardView: View {
                             .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                         Text(period.details)
-                            .font(.system(size: 11))
+                            .font(period.details.containsArabic ? .kanzalLulu(size: 13) : .system(size: 11))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -180,8 +180,8 @@ public struct ClassCardView: View {
                     Image(systemName: "checklist")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(FatimidPalette.bronze)
-                    Text("TASKS: \(period.subject.uppercased())")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    Text(period.subject.containsArabic ? "مهام: \(period.subject)" : "TASKS: \(period.subject.uppercased())")
+                        .font(period.subject.containsArabic ? .kanzalLulu(size: 13) : .system(size: 10, weight: .bold, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -226,7 +226,7 @@ public struct ClassCardView: View {
                             .buttonStyle(.plain)
 
                             Text(task.title)
-                                .font(.system(size: 11))
+                                .font(task.title.containsArabic ? .kanzalLulu(size: 13) : .system(size: 11))
                                 .strikethrough(task.isCompleted)
                                 .foregroundStyle(task.isCompleted ? .tertiary : .primary)
                                 .lineLimit(1)

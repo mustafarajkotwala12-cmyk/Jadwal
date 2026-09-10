@@ -83,7 +83,7 @@ public struct MenuBarView: View {
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(period.subject)
-                                .font(.body.weight(.medium))
+                                .font(period.subject.containsArabic ? .kanzalLulu(size: 16) : .body.weight(.medium))
                                 .lineLimit(1)
                             if let change = period.changeRecord {
                                 HStack(spacing: 3) {
@@ -95,7 +95,7 @@ public struct MenuBarView: View {
                                 .lineLimit(1)
                             } else if !period.details.isEmpty {
                                 Text(period.details)
-                                    .font(.caption2)
+                                    .font(period.details.containsArabic ? .kanzalLulu(size: 12) : .caption2)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }
@@ -159,14 +159,14 @@ public struct MenuBarView: View {
                             .buttonStyle(.plain)
 
                             Text(task.title)
-                                .font(.callout)
+                                .font(task.title.containsArabic ? .kanzalLulu(size: 14) : .callout)
                                 .lineLimit(1)
 
                             Spacer()
 
                             if let subj = task.linkedSubject, !subj.isEmpty {
                                 Text(subj)
-                                    .font(.caption2)
+                                    .font(subj.containsArabic ? .kanzalLulu(size: 11) : .caption2)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
                             }

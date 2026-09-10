@@ -77,7 +77,7 @@ public struct DateTimeRailView: View {
                         .foregroundStyle(.secondary)
 
                     Text(currentDayOfWeek.arabicName)
-                        .font(.system(size: 11, weight: .medium, design: .serif))
+                        .font(.kanzalLulu(size: 15))
                         .foregroundStyle(FatimidPalette.bronze)
                 }
 
@@ -194,7 +194,7 @@ public struct DateTimeRailView: View {
                 .foregroundStyle(color)
 
             Text(value)
-                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .font(value.containsArabic ? .kanzalLulu(size: 14) : .system(size: 11, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
 

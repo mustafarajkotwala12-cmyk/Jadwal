@@ -62,6 +62,9 @@ This document tracks all features, capabilities, and system components incorpora
   - **Accessibility**: Full keyboard navigation (Space/Return to flip) and instant toggle fallback for `accessibilityReduceMotion`.
   - **Date & Time Rail**: Prominent day number, month, weekday, institutional Arabic day name, live ticking digital clock, and compact stats.
   - **Restrained Fatimid Architectural Motifs**: Vector-rendered 8-pointed star (`KhatamEightPointStar`) watermarks, architectural dividers, and Fatimid emerald/bronze jewel palette.
+  - **Embedded KanzalLulu Arabic Typography**:
+    - Embedded `KanzalLulu-Regular.ttf` registered dynamically at runtime via CoreText and in `Info.plist` via `ATSApplicationFontsPath`.
+    - Automatic Unicode script detection (`containsArabic`) rendering Arabic subjects, day names, instructors, and task titles in authentic Kanz-al-Lulu typography across all views.
 - **Schedule Adjustments Banner**:
   - Amber alert block highlighting all changes detected for the active day with one-click acknowledgement.
   - Integrated quick task creation field.

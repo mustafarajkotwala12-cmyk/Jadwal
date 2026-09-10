@@ -27,10 +27,13 @@ echo "🐍 Embedding Jamea Helper pipeline..."
 mkdir -p "${RESOURCES_DIR}/helper"
 cp "../helper/jamea_helper.py" "${RESOURCES_DIR}/helper/"
 
-# Embed App Icon
-echo "🎨 Embedding App Icon..."
+# Embed App Icon & Custom Fonts
+echo "🎨 Embedding App Icon & Custom Fonts..."
 if [ -f "macOSApp/Resources/AppIcon.icns" ]; then
     cp "macOSApp/Resources/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
+fi
+if [ -f "macOSApp/Resources/KanzalLulu-Regular.ttf" ]; then
+    cp "macOSApp/Resources/KanzalLulu-Regular.ttf" "${RESOURCES_DIR}/KanzalLulu-Regular.ttf"
 fi
 
 # Create Info.plist
@@ -67,6 +70,8 @@ cat <<EOF > "${CONTENTS_DIR}/Info.plist"
     <true/>
     <key>LSApplicationCategoryType</key>
     <string>public.app-category.education</string>
+    <key>ATSApplicationFontsPath</key>
+    <string>.</string>
 </dict>
 </plist>
 EOF

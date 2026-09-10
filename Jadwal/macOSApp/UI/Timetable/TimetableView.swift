@@ -100,7 +100,7 @@ struct PeriodCardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(spacing: 8) {
                     Text(period.subject)
-                        .font(.title3.weight(.medium))
+                        .font(period.subject.containsArabic ? .kanzalLulu(size: 20) : .title3.weight(.medium))
                         .foregroundStyle(.primary)
 
                     if let change = period.changeRecord {
@@ -118,7 +118,7 @@ struct PeriodCardView: View {
 
                 if !period.details.isEmpty {
                     Label(period.details, systemImage: "person.text.rectangle")
-                        .font(.subheadline)
+                        .font(period.details.containsArabic ? .kanzalLulu(size: 13) : .subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -151,7 +151,7 @@ struct AddTaskModal: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Add Task for \(period.subject)")
-                .font(.headline)
+                .font(period.subject.containsArabic ? .kanzalLulu(size: 17) : .headline)
 
             TextField("Task description...", text: $title)
                 .textFieldStyle(.roundedBorder)

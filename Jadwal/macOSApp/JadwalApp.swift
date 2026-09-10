@@ -4,6 +4,10 @@ import SwiftUI
 struct JadwalApp: App {
     @StateObject private var environment = AppEnvironment()
 
+    init() {
+        FontManager.registerFonts()
+    }
+
     var body: some Scene {
         WindowGroup {
             MainNavigationView()
