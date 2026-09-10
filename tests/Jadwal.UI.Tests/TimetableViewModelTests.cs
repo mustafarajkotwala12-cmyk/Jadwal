@@ -100,4 +100,54 @@ public class TimetableViewModelTests
         matchingCards.Should().HaveCount(1);
         matchingCards[0].Period.Subject.Should().Be("جمعة مباركة");
     }
+
+    [Fact]
+    public async Task TimetableViewModel_Rows_ArePopulatedInRtlOrder()
+    {
+        var periods = new List<PeriodOccurrence>();
+        // Add Mon periods: PT at 06:00, then Periods 2-10
+        periods.Add(new("mon_pt", JadwalDayOfWeek.Monday, "2026-09-14", "PT", "06:00", "07:00", "Physical Education", "Field"));
+        for (int p = 2; p <= 10; p++)
+        {
+            var start = $"{p + 5:D2}:00";
+            var end = $"{p + 5:D2}:45";
+            periods.Add(new($"mon_p{p}", JadwalDayOfWeek.Monday, "2026-09-14", $"Period {p}", start, end, $"Subject {p}", "Room"));
+        }
+        var snapshot = new TimetableSnapshot("1446-1447", 1, periods, DateTime.UtcNow);
+        var taskRepo = new MemoryTaskRepo();
+        var timeRepo = new MemoryTimetableRepo(snapshot);
+        var changeRepo = new MemoryChangeRepo();
+        var dummyProvider = new DummyJamiaProvider();
+        var timeProvider = new TestTimeProvider();
+
+        var taskService = new TaskService(taskRepo, timeProvider);
+        var timetableService = new TimetableService(timeRepo, changeRepo, taskRepo, dummyProvider);
+
+        var vm = new TimetableViewModel(timetableService, taskService, timeProvider);
+        await vm.SelectDayAsync(JadwalDayOfWeek.Monday);
+
+        // Physical Education card is on the rightmost slot
+        vm.HasPhysicalEducation.Should().BeTrue();
+        vm.PhysicalEducationCard.Should().NotBeNull();
+        vm.PhysicalEducationCard!.Period.Subject.Should().Be("Physical Education");
+
+        // Row 1: Periods 2, 3, 4 are reversed for RTL (so [P4, P3, P2] left to right; earliest P2 on right next to PE!)
+        vm.Row1Cards.Should().HaveCount(3);
+        vm.Row1Cards[0].Period.PeriodName.Should().Be("Period 4");
+        vm.Row1Cards[1].Period.PeriodName.Should().Be("Period 3");
+        vm.Row1Cards[2].Period.PeriodName.Should().Be("Period 2");
+
+        // Row 2: Periods 5, 6, 7 reversed for RTL ([P7, P6, P5])
+        vm.Row2Cards.Should().HaveCount(3);
+        vm.Row2Cards[0].Period.PeriodName.Should().Be("Period 7");
+        vm.Row2Cards[1].Period.PeriodName.Should().Be("Period 6");
+        vm.Row2Cards[2].Period.PeriodName.Should().Be("Period 5");
+
+        // Row 3: Periods 8, 9, 10 reversed for RTL ([P10, P9, P8])
+        vm.Row3Cards.Should().HaveCount(3);
+        vm.Row3Cards[0].Period.PeriodName.Should().Be("Period 10");
+        vm.Row3Cards[1].Period.PeriodName.Should().Be("Period 9");
+        vm.Row3Cards[2].Period.PeriodName.Should().Be("Period 8");
+    }
 }
+

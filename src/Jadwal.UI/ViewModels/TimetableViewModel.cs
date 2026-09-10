@@ -176,7 +176,8 @@ public partial class TimetableViewModel : ViewModelBase
             HasPhysicalEducation = false;
         }
 
-        // Row 1 Cards
+        // Row 1 Cards (RTL: right-to-left layout)
+        var r1List = new List<ClassCardItemViewModel>();
         foreach (var item in three.Row1Items)
         {
             if (item.Period != null)
@@ -187,8 +188,13 @@ public partial class TimetableViewModel : ViewModelBase
                 var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
                 var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
-                Row1Cards.Add(cardVm);
+                r1List.Add(cardVm);
             }
+        }
+        r1List.Reverse();
+        foreach (var card in r1List)
+        {
+            Row1Cards.Add(card);
         }
 
         // Break 1 (Recess Break)
@@ -203,7 +209,8 @@ public partial class TimetableViewModel : ViewModelBase
             HasBreak1 = false;
         }
 
-        // Row 2 Cards
+        // Row 2 Cards (RTL: right-to-left layout)
+        var r2List = new List<ClassCardItemViewModel>();
         foreach (var item in three.Row2Items)
         {
             if (item.Period != null)
@@ -214,8 +221,13 @@ public partial class TimetableViewModel : ViewModelBase
                 var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
                 var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
-                Row2Cards.Add(cardVm);
+                r2List.Add(cardVm);
             }
+        }
+        r2List.Reverse();
+        foreach (var card in r2List)
+        {
+            Row2Cards.Add(card);
         }
 
         // Break 2 (Lunch & Namaz Break)
@@ -230,7 +242,8 @@ public partial class TimetableViewModel : ViewModelBase
             HasBreak2 = false;
         }
 
-        // Row 3 Cards
+        // Row 3 Cards (RTL: right-to-left layout)
+        var r3List = new List<ClassCardItemViewModel>();
         foreach (var item in three.Row3Items)
         {
             if (item.Period != null)
@@ -241,8 +254,13 @@ public partial class TimetableViewModel : ViewModelBase
                 var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
                 var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
-                Row3Cards.Add(cardVm);
+                r3List.Add(cardVm);
             }
+        }
+        r3List.Reverse();
+        foreach (var card in r3List)
+        {
+            Row3Cards.Add(card);
         }
         HasRow3 = Row3Cards.Count > 0;
 
