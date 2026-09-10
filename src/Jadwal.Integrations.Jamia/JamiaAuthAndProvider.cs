@@ -127,18 +127,16 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
         };
 
-        if (!forceLogin)
+        // 2. Check candidate local data files as fallback
+        foreach (var path in candidateDataPaths)
         {
-            foreach (var path in candidateDataPaths)
+            if (File.Exists(path))
             {
-                if (File.Exists(path))
+                try
                 {
-                    try
-                    {
-                        return await _importer.ImportFromFileAsync(path, ct);
-                    }
-                    catch { }
+                    return await _importer.ImportFromFileAsync(path, ct);
                 }
+                catch { }
             }
         }
 
