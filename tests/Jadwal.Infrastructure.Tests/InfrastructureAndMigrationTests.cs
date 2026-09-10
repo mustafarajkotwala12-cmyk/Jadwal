@@ -76,19 +76,44 @@ public class InfrastructureAndMigrationTests
     }
 
     [Fact]
-    public async Task JsonFileTimetableRepository_EmptyStorage_SeedsFromEmbeddedOrBundledTimetable()
+    public async Task JsonFileTimetableRepository_EmptyStorage_ReturnsNull_WhenCleanInitialRun()
     {
-        var emptyDir = Path.Combine(Path.GetTempPath(), "timetable_seed_test_" + Guid.NewGuid());
+        var emptyDir = Path.Combine(Path.GetTempPath(), "timetable_clean_test_" + Guid.NewGuid());
         try
         {
             var repo = new JsonFileTimetableRepository(emptyDir);
             var snapshot = await repo.GetLatestSnapshotAsync();
 
-            snapshot.Should().NotBeNull();
-            snapshot!.Periods.Should().NotBeEmpty();
+            // Should be clean and empty
+            snapshot.Should().BeNull();
+            File.Exists(Path.Combine(emptyDir, "stored_timetable.json")).Should().BeFalse();
 
-            // Verify it was persisted to stored_timetable.json
-            File.Exists(Path.Combine(emptyDir, "stored_timetable.json")).Should().BeTrue();
+            // Saving a new snapshot works properly
+            var newSnapshot = new TimetableSnapshot(
+                academicYear: "1446-1447",
+                weekNumber: 1,
+                periods: new List<PeriodOccurrence>
+                {
+                    new PeriodOccurrence(
+                        id: "p1",
+                        day: JadwalDayOfWeek.Monday,
+                        dateString: "2026-09-11",
+                        periodName: "Period 1",
+                        startTime: "08:00",
+                        endTime: "08:50",
+                        subject: "Fiqh",
+                        details: "Room 101"
+                    )
+                }
+            );
+
+            await repo.SaveSnapshotAsync(newSnapshot);
+
+            var retrieved = await repo.GetLatestSnapshotAsync();
+            retrieved.Should().NotBeNull();
+            retrieved!.Periods.Should().HaveCount(1);
+            retrieved.Periods[0].Subject.Should().Be("Fiqh");
+
         }
         finally
         {
@@ -96,3 +121,4 @@ public class InfrastructureAndMigrationTests
         }
     }
 }
+

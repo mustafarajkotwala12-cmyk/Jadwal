@@ -66,6 +66,14 @@
                         </StackPanel>
                     </Button>
 
+                    <!-- Calendar -->
+                    <Button Classes="navBtn" Command="{Binding NavigateToCalendarCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="🌙" FontSize="16" />
+                            <TextBlock Text="Calendar" FontSize="14" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Button>
+
                     <!-- Timetable -->
                     <Button Classes="navBtn" Command="{Binding NavigateToTimetableCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -112,6 +120,9 @@
                 <TransitioningContentControl.DataTemplates>
                     <DataTemplate DataType="vm:TodayViewModel">
                         <views:TodayView />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:CalendarViewModel">
+                        <views:CalendarView />
                     </DataTemplate>
                     <DataTemplate DataType="vm:TimetableViewModel">
                         <views:TimetableView />

@@ -45,6 +45,11 @@ public class TimetableService
         await _changeRepository.AcknowledgeAllChangesAsync(ct);
     }
 
+    public async Task<bool> HasValidSessionAsync(CancellationToken ct = default)
+    {
+        return await _provider.HasValidSessionAsync(ct);
+    }
+
     public async Task<IReadOnlyList<TimetableChangeRecord>> RefreshTimetableAsync(bool forceLogin = false, CancellationToken ct = default)
     {
         var freshRaw = await _provider.FetchCurrentTimetableAsync(forceLogin, ct);

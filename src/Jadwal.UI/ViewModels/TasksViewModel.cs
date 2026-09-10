@@ -43,6 +43,31 @@ public partial class TasksViewModel : ViewModelBase
     [ObservableProperty]
     private string _newTaskNotes = string.Empty;
 
+    // Edit Task Form Fields
+    [ObservableProperty]
+    private bool _isEditingTask = false;
+
+    [ObservableProperty]
+    private Guid? _editingTaskId;
+
+    [ObservableProperty]
+    private string _editingTaskTitle = string.Empty;
+
+    [ObservableProperty]
+    private string _editingTaskSubject = string.Empty;
+
+    [ObservableProperty]
+    private TaskPriority _editingTaskPriority = TaskPriority.Medium;
+
+    [ObservableProperty]
+    private TaskCategory _editingTaskCategory = TaskCategory.Academic;
+
+    [ObservableProperty]
+    private DateTimeOffset? _editingTaskDeadline = DateTimeOffset.Now.AddDays(1);
+
+    [ObservableProperty]
+    private string _editingTaskNotes = string.Empty;
+
     public ObservableCollection<TaskItem> FilteredTasks { get; } = new();
     public ObservableCollection<string> AvailableSubjects { get; } = new();
 
@@ -173,6 +198,55 @@ public partial class TasksViewModel : ViewModelBase
     {
         if (task == null) return;
         await _taskService.ToggleTaskCompletionAsync(task.Id);
+        await RefreshTasksAsync();
+    }
+
+    [RelayCommand]
+    public void StartEditTask(TaskItem? task)
+    {
+        if (task == null) return;
+        IsAddingTask = false;
+        EditingTaskId = task.Id;
+        EditingTaskTitle = task.Title;
+        EditingTaskSubject = task.LinkedSubject ?? AvailableSubjects.FirstOrDefault() ?? "General";
+        EditingTaskPriority = task.Priority;
+        EditingTaskCategory = task.Category;
+        EditingTaskDeadline = task.Deadline.HasValue ? new DateTimeOffset(task.Deadline.Value) : null;
+        EditingTaskNotes = task.Notes ?? string.Empty;
+        IsEditingTask = true;
+    }
+
+    [RelayCommand]
+    public void CancelEditTask()
+    {
+        IsEditingTask = false;
+        EditingTaskId = null;
+        EditingTaskTitle = string.Empty;
+        EditingTaskNotes = string.Empty;
+    }
+
+    [RelayCommand]
+    public async Task SaveEditedTaskAsync()
+    {
+        if (EditingTaskId == null || string.IsNullOrWhiteSpace(EditingTaskTitle))
+            return;
+
+        var existing = await _taskService.GetTaskByIdAsync(EditingTaskId.Value);
+        if (existing == null)
+        {
+            CancelEditTask();
+            return;
+        }
+
+        existing.Title = EditingTaskTitle.Trim();
+        existing.LinkedSubject = string.IsNullOrEmpty(EditingTaskSubject) ? null : EditingTaskSubject;
+        existing.Priority = EditingTaskPriority;
+        existing.Category = EditingTaskCategory;
+        existing.Deadline = EditingTaskDeadline?.DateTime;
+        existing.Notes = string.IsNullOrWhiteSpace(EditingTaskNotes) ? null : EditingTaskNotes.Trim();
+
+        await _taskService.UpdateTaskAsync(existing);
+        CancelEditTask();
         await RefreshTasksAsync();
     }
 

@@ -4,12 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:Jadwal.UI.ViewModels"
              xmlns:ctrl="using:Jadwal.UI.Controls"
+             xmlns:models="using:Jadwal.Domain.Models"
              mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
              x:Class="Jadwal.UI.Views.TodayView"
              x:DataType="vm:TodayViewModel">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="20" Margin="24">
+        <StackPanel Spacing="16" Margin="24">
 
             <!-- HERO BANNER: DATE & TIME (FATIMID ILLUMINATED STYLE) -->
             <Border CornerRadius="18"
@@ -22,15 +23,28 @@
                     </Transitions>
                 </Border.Transitions>
                 <Grid ColumnDefinitions="*,Auto">
-                    <!-- Left: Arabic Weekday, English Date, Subtitle -->
+                    <!-- Left: Arabic Weekday, English Date, Hijri Date, Subtitle -->
                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ArabicWeekday}"
-                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                   FontSize="32" FontWeight="Bold"
-                                   Foreground="White" />
-                        <TextBlock Text="{Binding EnglishDate}"
-                                   FontSize="15" FontWeight="SemiBold"
-                                   Foreground="#F0F8F5" />
+                        <StackPanel Orientation="Horizontal" Spacing="14">
+                            <TextBlock Text="{Binding ArabicWeekday}"
+                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                       FontSize="32" FontWeight="Bold"
+                                       Foreground="White" />
+                            <TextBlock Text="{Binding HijriDateArabic}"
+                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                       FontSize="24"
+                                       Foreground="{DynamicResource GoldBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding EnglishDate}"
+                                       FontSize="15" FontWeight="SemiBold"
+                                       Foreground="#F0F8F5" />
+                            <TextBlock Text="•" Foreground="#85C2A8" FontSize="14" />
+                            <TextBlock Text="{Binding HijriDateFormatted}"
+                                       FontSize="15" FontWeight="Bold"
+                                       Foreground="{DynamicResource GoldBrush}" />
+                        </StackPanel>
                         <TextBlock Text="{Binding DaySubtitle}"
                                    FontSize="12" Foreground="#D5E8DF"
                                    Margin="0,2,0,0" />
@@ -51,6 +65,92 @@
                         </Border>
                     </StackPanel>
                 </Grid>
+            </Border>
+
+            <!-- TODAY'S MIQAAT(S) SECTION (SHOWS DATE AND ALL MIQAATS IN THE DAY) -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource GoldBrush}"
+                    BorderThickness="1.5"
+                    CornerRadius="16"
+                    Padding="20,16"
+                    BoxShadow="0 4 16 0 #15000000">
+                <StackPanel Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="🌙" FontSize="18" VerticalAlignment="Center" />
+                            <TextBlock Text="Today's Miqaat(s)"
+                                       FontSize="16" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <Border Background="{DynamicResource GoldSoftBrush}"
+                                    CornerRadius="6" Padding="8,2" Margin="4,0,0,0"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="{Binding HijriDateFormatted}"
+                                           FontSize="12" FontWeight="Bold"
+                                           Foreground="{DynamicResource BronzeBrush}" />
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding HijriDateArabic}"
+                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                   FontSize="20"
+                                   Foreground="{DynamicResource BronzeBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- List of today's miqaats -->
+                    <ItemsControl IsVisible="{Binding HasTodayMiqaats}"
+                                  ItemsSource="{Binding TodayMiqaats}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="models:MiqaatItem">
+                                <Border Background="{DynamicResource TaskItemBgBrush}"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="10"
+                                        Padding="14,10"
+                                        Margin="0,0,0,6">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <!-- Phase Badge (Day / Night) -->
+                                        <Border Grid.Column="0"
+                                                Background="#22B3822E"
+                                                BorderBrush="{DynamicResource BronzeBrush}"
+                                                BorderThickness="1"
+                                                CornerRadius="6"
+                                                Padding="8,4"
+                                                VerticalAlignment="Center"
+                                                Margin="0,0,12,0">
+                                            <TextBlock Text="{Binding PhaseBadge}"
+                                                       FontSize="11" FontWeight="Bold"
+                                                       Foreground="{DynamicResource BronzeBrush}" />
+                                        </Border>
+
+                                        <!-- Title & Description -->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="{Binding Title}"
+                                                       FontSize="14" FontWeight="Bold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            <TextBlock Text="{Binding Description}"
+                                                       IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                       FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Empty state if no Miqaat today -->
+                    <Border IsVisible="{Binding !HasTodayMiqaats}"
+                            Background="#08000000"
+                            CornerRadius="8"
+                            Padding="12,8">
+                        <TextBlock Text="No specific Miqaat recorded for today."
+                                   FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                   FontStyle="Italic" />
+                    </Border>
+                </StackPanel>
             </Border>
 
             <!-- CHANGES ALERT BANNER (SHOWN WHEN SCHEDULE HAS DISCREPANCIES) -->

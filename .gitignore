@@ -41,7 +41,9 @@ data/timetable_raw.json
 [Bb]in/
 [Oo]bj/
 dist/
+backups/
 *.user
 *.suo
 *.sln.docstates
 .vs/
+

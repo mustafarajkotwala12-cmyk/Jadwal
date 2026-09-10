@@ -100,6 +100,69 @@
                 </StackPanel>
             </Border>
 
+            <!-- COLLAPSIBLE EDIT TASK PANEL -->
+            <Border IsVisible="{Binding IsEditingTask}"
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource BronzeBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="18" BoxShadow="0 4 16 0 #20000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="✏️ Edit Task" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource BronzeBrush}" VerticalAlignment="Center" />
+                            <Border Background="{DynamicResource BronzeSoftBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="Updating details" FontSize="11" Foreground="{DynamicResource BronzeBrush}" />
+                            </Border>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="✕" Classes="flat" Command="{Binding CancelEditTaskCommand}" />
+                    </Grid>
+
+                    <TextBox Text="{Binding EditingTaskTitle}"
+                             FontFamily="{StaticResource ArabicCalligraphyFont}"
+                             PlaceholderText="Task title (e.g. درس حفظ or Prepare lesson summary)" />
+
+                    <Grid ColumnDefinitions="*,*,*">
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Subject" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding AvailableSubjects}"
+                                      SelectedItem="{Binding EditingTaskSubject}"
+                                      FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="4,0,4,0">
+                            <TextBlock Text="Priority" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding PriorityOptions}"
+                                      SelectedItem="{Binding EditingTaskPriority}"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                            <TextBlock Text="Category" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding CategoryOptions}"
+                                      SelectedItem="{Binding EditingTaskCategory}"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBox Text="{Binding EditingTaskNotes}"
+                             FontFamily="{StaticResource ArabicCalligraphyFont}"
+                             PlaceholderText="Additional notes or references in Arabic or English (optional)"
+                             AcceptsReturn="True" Height="60" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Content="Cancel" Command="{Binding CancelEditTaskCommand}" />
+                        <Button Content="Save Changes" Command="{Binding SaveEditedTaskCommand}"
+                                Background="{DynamicResource BronzeBrush}" Foreground="White" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- SEARCH AND FILTER BAR -->
             <Grid ColumnDefinitions="*,Auto">
                 <TextBox Grid.Column="0" Text="{Binding SearchQuery}"
@@ -169,12 +232,17 @@
                                     </Border>
                                 </StackPanel>
 
-                                <!-- Delete Button -->
-                                <Button Grid.Column="3" Content="🗑️"
-                                        Classes="flat" Padding="6"
-                                        Command="{Binding $parent[UserControl].((vm:TasksViewModel)DataContext).DeleteTaskCommand}"
-                                        CommandParameter="{Binding}"
-                                        VerticalAlignment="Center" />
+                                <!-- Actions: Edit and Delete -->
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                    <Button Content="✏️" Classes="flat" Padding="6"
+                                            ToolTip.Tip="Edit Task"
+                                            Command="{Binding $parent[UserControl].((vm:TasksViewModel)DataContext).StartEditTaskCommand}"
+                                            CommandParameter="{Binding}" />
+                                    <Button Content="🗑️" Classes="flat" Padding="6"
+                                            ToolTip.Tip="Delete Task"
+                                            Command="{Binding $parent[UserControl].((vm:TasksViewModel)DataContext).DeleteTaskCommand}"
+                                            CommandParameter="{Binding}" />
+                                </StackPanel>
                             </Grid>
                         </Border>
                     </DataTemplate>

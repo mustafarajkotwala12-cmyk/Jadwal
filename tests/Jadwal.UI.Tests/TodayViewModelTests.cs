@@ -79,7 +79,7 @@ public class DummyJamiaProvider : IJamiaTimetableProvider
 
 public class TodayViewModelTests
 {
-    private TimetableSnapshot CreateStandardSnapshot()
+    public static TimetableSnapshot CreateStandardSnapshot()
     {
         var periods = new List<PeriodOccurrence>
         {
@@ -253,5 +253,75 @@ public class TodayViewModelTests
 
         var repoTasks = await taskService.GetAllTasksAsync();
         repoTasks.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ClassCardItemViewModel_StatusTransitionsAndBadges_WorkAccurately()
+    {
+        var period = new PeriodOccurrence(
+            id: "p1",
+            day: JadwalDayOfWeek.Monday,
+            dateString: "2026-09-14",
+            periodName: "Period 1",
+            startTime: "08:30",
+            endTime: "09:15",
+            subject: "فقه",
+            details: "Room 101"
+        );
+
+        var card = new ClassCardItemViewModel(period, ClassLiveStatus.Upcoming);
+
+        // 1. Before class (Upcoming)
+        card.UpdateStatus(new TimeOnly(7, 30));
+        card.StatusText.Should().Be("UPCOMING");
+        card.StatusBadgeBackground.Should().Be("#F8F4EC");
+        card.StatusBadgeForeground.Should().Be("#8C6D37");
+
+        // 2. 10 minutes before class (StartingSoon)
+        card.UpdateStatus(new TimeOnly(8, 20));
+        card.StatusText.Should().Be("IN 10M");
+        card.StatusBadgeBackground.Should().Be("#CCE5FF");
+        card.StatusBadgeForeground.Should().Be("#004085");
+
+        // 3. During class (InProgress)
+        card.UpdateStatus(new TimeOnly(8, 45));
+        card.StatusText.Should().Be("IN SESSION");
+        card.StatusBadgeBackground.Should().Be("#D4EDDA");
+        card.StatusBadgeForeground.Should().Be("#155724");
+
+        // 4. After class has ended (Completed)
+        card.UpdateStatus(new TimeOnly(9, 30));
+        card.StatusText.Should().Be("DONE");
+        card.StatusBadgeBackground.Should().Be("#E9ECEF");
+        card.StatusBadgeForeground.Should().Be("#495057");
+
+        // 5. Changed Period (while active/upcoming)
+        var changedPeriod = new PeriodOccurrence(
+            id: "p2",
+            day: JadwalDayOfWeek.Monday,
+            dateString: "2026-09-14",
+            periodName: "Period 2",
+            startTime: "09:30",
+            endTime: "10:15",
+            subject: "ادب",
+            details: "Room 102",
+            changeRecord: new TimetableChangeRecord
+            {
+                PeriodId = "p2",
+                ChangeType = ChangeType.SubjectChanged,
+                OldSubject = "قرآن",
+                NewSubject = "ادب"
+            }
+        );
+        var changedCard = new ClassCardItemViewModel(changedPeriod, ClassLiveStatus.Changed);
+        changedCard.UpdateStatus(new TimeOnly(9, 35));
+        changedCard.StatusText.Should().Be("CHANGED");
+        changedCard.StatusBadgeBackground.Should().Be("#FFF3CD");
+        changedCard.StatusBadgeForeground.Should().Be("#856404");
+
+        // When changed class concludes, it reflects DONE
+        changedCard.UpdateStatus(new TimeOnly(10, 30));
+        changedCard.StatusText.Should().Be("DONE");
+        changedCard.StatusBadgeBackground.Should().Be("#E9ECEF");
     }
 }

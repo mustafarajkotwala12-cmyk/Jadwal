@@ -25,6 +25,9 @@ public class ClassCardItemViewModel : ObservableObject
             if (SetProperty(ref _status, value))
             {
                 OnPropertyChanged(nameof(StatusText));
+                OnPropertyChanged(nameof(StatusBadgeBackground));
+                OnPropertyChanged(nameof(StatusBadgeForeground));
+                OnPropertyChanged(nameof(StatusBadgeBorder));
             }
         }
     }
@@ -38,7 +41,14 @@ public class ClassCardItemViewModel : ObservableObject
     {
         if (Period.ChangeRecord != null)
         {
-            Status = ClassLiveStatus.Changed;
+            if (TimeOnly.TryParse(Period.EndTime, out var end) && now >= end)
+            {
+                Status = ClassLiveStatus.Completed;
+            }
+            else
+            {
+                Status = ClassLiveStatus.Changed;
+            }
         }
         else
         {
@@ -163,6 +173,36 @@ public class ClassCardItemViewModel : ObservableObject
         ClassStatusKind.Cancelled => "CANCELLED",
         _ => "UPCOMING"
     };
+
+    public string StatusBadgeBackground => Status.Kind switch
+    {
+        ClassStatusKind.InProgress => "#D4EDDA",
+        ClassStatusKind.StartingSoon => "#CCE5FF",
+        ClassStatusKind.Completed => "#E9ECEF",
+        ClassStatusKind.Changed => "#FFF3CD",
+        ClassStatusKind.Cancelled => "#F8D7DA",
+        _ => "#F8F4EC"
+    };
+
+    public string StatusBadgeForeground => Status.Kind switch
+    {
+        ClassStatusKind.InProgress => "#155724",
+        ClassStatusKind.StartingSoon => "#004085",
+        ClassStatusKind.Completed => "#495057",
+        ClassStatusKind.Changed => "#856404",
+        ClassStatusKind.Cancelled => "#721C24",
+        _ => "#8C6D37"
+    };
+
+    public string StatusBadgeBorder => Status.Kind switch
+    {
+        ClassStatusKind.InProgress => "#C3E6CB",
+        ClassStatusKind.StartingSoon => "#B8DAFF",
+        ClassStatusKind.Completed => "#CED4DA",
+        ClassStatusKind.Changed => "#FFEEBA",
+        ClassStatusKind.Cancelled => "#F5C6CB",
+        _ => "#DFD5C2"
+    };
 }
 
 public class BreakPillItemViewModel
@@ -190,6 +230,8 @@ public partial class TodayViewModel : ViewModelBase
     private readonly ITimeProvider _timeProvider;
     private readonly TimetableService? _timetableService;
 
+    private readonly CalendarService _calendarService;
+
     private int _tickCount;
     private JadwalDayOfWeek _loadedDay;
 
@@ -204,6 +246,20 @@ public partial class TodayViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _englishDate = string.Empty;
+
+    [ObservableProperty]
+    private string _hijriDateFormatted = string.Empty;
+
+    [ObservableProperty]
+    private string _hijriDateArabic = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasTodayMiqaats;
+
+    [ObservableProperty]
+    private string _todayMiqaatsSummary = string.Empty;
+
+    public ObservableCollection<MiqaatItem> TodayMiqaats { get; } = new();
 
     [ObservableProperty]
     private string _daySubtitle = string.Empty;
@@ -260,12 +316,14 @@ public partial class TodayViewModel : ViewModelBase
         DashboardService dashboardService,
         TaskService taskService,
         TimetableService timetableService,
-        ITimeProvider timeProvider)
+        ITimeProvider timeProvider,
+        CalendarService? calendarService = null)
     {
         _dashboardService = dashboardService;
         _taskService = taskService;
         _timetableService = timetableService;
         _timeProvider = timeProvider;
+        _calendarService = calendarService ?? new CalendarService();
 
         CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
     }
@@ -342,6 +400,28 @@ public partial class TodayViewModel : ViewModelBase
         CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
         Row1Title = dto.Rule.Row1Title;
         Row2Title = dto.Rule.Row2Title;
+
+        // Calculate Fatimid Hijri date & fetch today's Miqaats
+        var todayHijri = _calendarService.GetHijriDate(DateTime.Today);
+        HijriDateFormatted = todayHijri.ToFormattedString();
+        HijriDateArabic = todayHijri.ToArabicString();
+
+        var miqaats = await _calendarService.GetMiqaatsForHijriDateAsync(todayHijri.Month, todayHijri.Day);
+        TodayMiqaats.Clear();
+        if (miqaats != null && miqaats.Count > 0)
+        {
+            foreach (var m in miqaats)
+            {
+                TodayMiqaats.Add(m);
+            }
+            HasTodayMiqaats = true;
+            TodayMiqaatsSummary = string.Join(" • ", miqaats.Select(m => m.Title));
+        }
+        else
+        {
+            HasTodayMiqaats = false;
+            TodayMiqaatsSummary = "No specific miqaat recorded for today";
+        }
 
         if (dto.ActivePeriod != null)
         {
@@ -517,7 +597,10 @@ public partial class TodayViewModel : ViewModelBase
     [RelayCommand]
     public async Task AcknowledgeChangesAsync()
     {
-        await _timetableService.AcknowledgeAllChangesAsync();
+        if (_timetableService != null)
+        {
+            await _timetableService.AcknowledgeAllChangesAsync();
+        }
         HasChanges = false;
         await RefreshScheduleAsync();
     }

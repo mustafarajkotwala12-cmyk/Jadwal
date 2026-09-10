@@ -54,6 +54,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<IChangeRepository, JsonFileChangeRepository>();
         services.AddSingleton<IProgramRepository, JsonFileProgramRepository>();
         services.AddSingleton<INoteRepository, JsonFileNoteRepository>();
+        services.AddSingleton<IMiqaatRepository, JsonMiqaatRepository>();
 
         // Time Provider
         services.AddSingleton<ITimeProvider, SystemTimeProvider>();
@@ -82,9 +83,11 @@ public partial class App : Avalonia.Application
         services.AddSingleton<TimetableService>();
         services.AddSingleton<DashboardService>();
         services.AddSingleton<ReminderService>();
+        services.AddSingleton<CalendarService>();
 
         // ViewModels
         services.AddTransient<TodayViewModel>();
+        services.AddTransient<CalendarViewModel>();
         services.AddTransient<TimetableViewModel>();
         services.AddTransient<TasksViewModel>();
         services.AddTransient<SettingsViewModel>();

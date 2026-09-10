@@ -23,9 +23,6 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\data\timetable.json" CopyToOutputDirectory="PreserveNewest" Link="data\timetable.json" />
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Jadwal.UI\Jadwal.UI.csproj" />

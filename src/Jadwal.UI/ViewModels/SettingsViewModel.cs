@@ -194,8 +194,18 @@ public partial class SettingsViewModel : ViewModelBase
     [RelayCommand]
     public async Task SyncJamiaScheduleAsync()
     {
+        await PerformSyncAsync(forceLogin: false);
+    }
+
+    [RelayCommand]
+    public async Task ReauthenticatePortalAsync()
+    {
+        await PerformSyncAsync(forceLogin: true);
+    }
+
+    private async Task PerformSyncAsync(bool forceLogin)
+    {
         IsBusy = true;
-        StatusMessage = "Connecting to Jamia Portal. If a login window appears, please complete authentication...";
         IsSuccess = false;
 
         try
@@ -205,7 +215,37 @@ public partial class SettingsViewModel : ViewModelBase
                 await SaveCredentialsAsync();
             }
 
-            var changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
+            IReadOnlyList<TimetableChangeRecord> changes;
+
+            if (forceLogin)
+            {
+                StatusMessage = "Launching portal login window. Please authenticate in the browser...";
+                changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
+            }
+            else
+            {
+                var hasValidSession = await _timetableService.HasValidSessionAsync();
+                if (!hasValidSession)
+                {
+                    StatusMessage = "Session expired or authentication required. Opening login window...";
+                    changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
+                }
+                else
+                {
+                    StatusMessage = "Synchronizing directly via secure portal connection...";
+                    try
+                    {
+                        changes = await _timetableService.RefreshTimetableAsync(forceLogin: false);
+                    }
+                    catch (Exception)
+                    {
+                        // Direct fetch failed (e.g. server returned 401 or token was invalidated)
+                        StatusMessage = "Portal session expired. Opening login window to re-authenticate...";
+                        changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
+                    }
+                }
+            }
+
             var idLabel = !string.IsNullOrEmpty(StoredItsId) ? $" for ITS {StoredItsId}" : "";
             StatusMessage = changes.Count > 0
                 ? $"Sync successful! Updated timetable with {changes.Count} changes{idLabel}."

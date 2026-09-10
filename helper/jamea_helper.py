@@ -722,10 +722,29 @@ async def main():
         current_week = None
         authenticated = False
 
-        context = await p.chromium.launch_persistent_context(
-            user_data_dir=str(BROWSER_PROFILE),
-            headless=False,
-        )
+        # Try launching bundled Chromium, or fallback to system Google Chrome / Microsoft Edge
+        channels_to_try = [None, "chrome", "msedge", "chromium"]
+        context = None
+        last_launch_err = None
+        for channel in channels_to_try:
+            try:
+                kwargs = {
+                    "user_data_dir": str(BROWSER_PROFILE),
+                    "headless": False,
+                }
+                if channel:
+                    kwargs["channel"] = channel
+                context = await p.chromium.launch_persistent_context(**kwargs)
+                break
+            except Exception as e:
+                last_launch_err = e
+                continue
+
+        if context is None:
+            raise RuntimeError(
+                f"Could not launch any web browser for portal authentication. "
+                f"Please ensure Google Chrome, Microsoft Edge, or Chromium is installed. Error: {last_launch_err}"
+            )
 
         page = context.pages[0] if context.pages else await context.new_page()
 

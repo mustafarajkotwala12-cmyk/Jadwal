@@ -160,10 +160,6 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "timetable.json"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "timetable.json"),
-            Path.Combine(AppContext.BaseDirectory, "data", "timetable.json"),
-            Path.Combine(AppContext.BaseDirectory, "timetable.json"),
-            Path.Combine(_workspaceDirectory, "data", "timetable.json"),
-            Path.Combine(_workspaceDirectory, "Data", "timetable.json"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
         };
 

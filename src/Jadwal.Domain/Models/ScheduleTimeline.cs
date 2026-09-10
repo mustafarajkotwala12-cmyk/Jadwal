@@ -132,7 +132,7 @@ public static class ScheduleTimelineBuilder
         {
             var current = sorted[i];
             var status = current.ChangeRecord != null
-                ? ClassLiveStatus.Changed
+                ? (TimeOnly.TryParse(current.EndTime, out var end) && now >= end ? ClassLiveStatus.Completed : ClassLiveStatus.Changed)
                 : ClassLiveStatus.Compute(current.StartTime, current.EndTime, now);
 
             items.Add(ScheduleTimelineItem.ForPeriod(current, status));
@@ -247,7 +247,7 @@ public static class ScheduleTimelineBuilder
         foreach (var p in sorted)
         {
             var status = p.ChangeRecord != null
-                ? ClassLiveStatus.Changed
+                ? (TimeOnly.TryParse(p.EndTime, out var pEnd) && now >= pEnd ? ClassLiveStatus.Completed : ClassLiveStatus.Changed)
                 : ClassLiveStatus.Compute(p.StartTime, p.EndTime, now);
 
             var isPt = p.PeriodName?.Contains("PT", StringComparison.OrdinalIgnoreCase) == true ||

@@ -162,7 +162,15 @@
                                 Command="{Binding SyncJamiaScheduleCommand}"
                                 IsEnabled="{Binding !IsBusy}"
                                 Background="{DynamicResource EmeraldBrush}" Foreground="White"
-                                Padding="16,9" CornerRadius="8" FontWeight="Bold" Margin="0,0,10,10" />
+                                Padding="16,9" CornerRadius="8" FontWeight="Bold" Margin="0,0,10,10"
+                                ToolTip.Tip="Syncs timetable directly using saved session without opening a browser." />
+
+                        <Button Content="🔑 Re-Authenticate Portal"
+                                Command="{Binding ReauthenticatePortalCommand}"
+                                IsEnabled="{Binding !IsBusy}"
+                                Background="{DynamicResource BronzeSoftBrush}" Foreground="{DynamicResource BronzeBrush}"
+                                Padding="16,9" CornerRadius="8" FontWeight="SemiBold" Margin="0,0,10,10"
+                                ToolTip.Tip="Opens login window to re-authenticate or switch ITS account." />
 
                         <Button Content="📂 Import Timetable (.json / .xlsx)"
                                 Command="{Binding ImportTimetableFileCommand}"

@@ -68,6 +68,11 @@ public class TaskService
         return task;
     }
 
+    public async Task<TaskItem?> GetTaskByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _taskRepository.GetTaskByIdAsync(id, ct);
+    }
+
     public async Task UpdateTaskAsync(TaskItem task, CancellationToken ct = default)
     {
         await _taskRepository.SaveTaskAsync(task, ct);

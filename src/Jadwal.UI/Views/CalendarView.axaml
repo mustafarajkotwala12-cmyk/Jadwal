@@ -1,0 +1,301 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             xmlns:models="using:Jadwal.Domain.Models"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="800"
+             x:Class="Jadwal.UI.Views.CalendarView"
+             x:DataType="vm:CalendarViewModel">
+
+    <UserControl.Styles>
+        <!-- Nav Button Style -->
+        <Style Selector="Button.calNavBtn">
+            <Setter Property="Background" Value="#15B3822E" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.calNavBtn:pointerover">
+            <Setter Property="Background" Value="#30B3822E" />
+        </Style>
+
+        <!-- Day Cell Button Style -->
+        <Style Selector="Button.dayCellBtn">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="2" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16" Margin="24">
+
+            <!-- MONTH NAVIGATION & HEADER BANNER -->
+            <Border CornerRadius="18"
+                    Background="{DynamicResource BannerGradientBrush}"
+                    Padding="24,18"
+                    BoxShadow="0 8 24 0 #200B4F39">
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- Left: Month Titles (English & Arabic) + Gregorian Span -->
+                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <TextBlock Text="{Binding MonthTitle}"
+                                       FontSize="24" FontWeight="Bold"
+                                       Foreground="White" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding MonthTitleArabic}"
+                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                       FontSize="26"
+                                       Foreground="{DynamicResource GoldBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding GregorianSpan}"
+                                   FontSize="14" FontWeight="Medium"
+                                   Foreground="#D5E8DF" />
+                    </StackPanel>
+
+                    <!-- Right: Navigation Controls (<, Today, >) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button Classes="calNavBtn" Command="{Binding PreviousMonthCommand}" ToolTip.Tip="Previous Month">
+                            <TextBlock Text="◀ Prev" FontSize="12" Foreground="White" />
+                        </Button>
+                        <Button Classes="calNavBtn" Command="{Binding TodayCommand}" ToolTip.Tip="Jump to Today">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock Text="📅" FontSize="12" />
+                                <TextBlock Text="Today" FontSize="12" Foreground="White" />
+                            </StackPanel>
+                        </Button>
+                        <Button Classes="calNavBtn" Command="{Binding NextMonthCommand}" ToolTip.Tip="Next Month">
+                            <TextBlock Text="Next ▶" FontSize="12" Foreground="White" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- GENERIC 7-COLUMN CALENDAR CONTAINER -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="16"
+                    BoxShadow="0 4 16 0 #15000000">
+                <StackPanel Spacing="8">
+
+                    <!-- WEEKDAY HEADER ROW (SUN - SAT) -->
+                    <UniformGrid Columns="7" Margin="0,0,0,8">
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Sunday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Monday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Tuesday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Wednesday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Thursday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Friday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <Border Padding="6,8" Background="#0C0D5C43" CornerRadius="6" Margin="2,0">
+                            <TextBlock Text="Saturday" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                    </UniformGrid>
+
+                    <!-- DAYS GRID -->
+                    <ItemsControl ItemsSource="{Binding Days}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="7" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:CalendarDayItemViewModel">
+                                <Button Classes="dayCellBtn"
+                                        Command="{Binding $parent[UserControl].((vm:CalendarViewModel)DataContext).SelectDayCommand}"
+                                        CommandParameter="{Binding}">
+                                    <Border CornerRadius="10"
+                                            MinHeight="74"
+                                            Padding="8,6"
+                                            Background="{Binding CellBackground}"
+                                            BorderBrush="{Binding CellBorderBrush}"
+                                            BorderThickness="{Binding CellBorderThickness}"
+                                            Opacity="{Binding CellOpacity}">
+
+                                        <Grid RowDefinitions="Auto,*,Auto">
+                                            <!-- Top: Hijri Day (large) + Gregorian Day & Month (small) -->
+                                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                                                <!-- Hijri Day Number -->
+                                                <TextBlock Grid.Column="0"
+                                                           Text="{Binding HijriDayText}"
+                                                           FontSize="18" FontWeight="Bold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                                           VerticalAlignment="Center" />
+
+                                                <!-- Gregorian Date Info -->
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding GregorianDayText}"
+                                                               FontSize="11" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextMutedBrush}" />
+                                                    <TextBlock Text="{Binding GregorianMonthText}"
+                                                               FontSize="10"
+                                                               Foreground="{DynamicResource TextMutedBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <!-- Middle: Today Indicator Pill -->
+                                            <Border Grid.Row="1"
+                                                    IsVisible="{Binding IsToday}"
+                                                    Background="{DynamicResource EmeraldBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="6,2"
+                                                    HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"
+                                                    Margin="0,2,0,2">
+                                                <TextBlock Text="TODAY" FontSize="9" FontWeight="Bold" Foreground="White" />
+                                            </Border>
+
+                                            <!-- Bottom: Miqaat Pill / Indicator -->
+                                            <Border Grid.Row="2"
+                                                    IsVisible="{Binding HasMiqaats}"
+                                                    Background="#25CFA342"
+                                                    BorderBrush="{DynamicResource GoldBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="4,2"
+                                                    Margin="0,2,0,0">
+                                                <Grid ColumnDefinitions="Auto,*">
+                                                    <TextBlock Grid.Column="0" Text="🌙" FontSize="9" Margin="0,0,3,0" VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="1"
+                                                               Text="{Binding TopMiqaatTitle}"
+                                                               FontSize="9" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               VerticalAlignment="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- SELECTED DAY DETAILS & MIQAATS PANEL -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource GoldBrush}"
+                    BorderThickness="1.5"
+                    CornerRadius="16"
+                    Padding="20,16"
+                    BoxShadow="0 4 16 0 #15000000">
+                <StackPanel Spacing="12">
+                    <!-- Selected Day Header -->
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🌙" FontSize="18" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding SelectedDayHeader}"
+                                           FontSize="18" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding SelectedDayGregorianDate}"
+                                       FontSize="13" FontWeight="Medium"
+                                       Foreground="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+
+                        <!-- Arabic Date Display -->
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding SelectedDayArabicDate}"
+                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                   FontSize="22"
+                                   Foreground="{DynamicResource BronzeBrush}"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+
+                    <Separator Height="1" Background="{DynamicResource CardBorderBrush}" Margin="0,4" />
+
+                    <!-- Miqaats List for Selected Day -->
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="MIQAATS ON THIS DAY"
+                                   FontSize="11" FontWeight="Bold"
+                                   Foreground="{DynamicResource BronzeBrush}"
+                                   LetterSpacing="1" />
+
+                        <!-- If Day has Miqaats -->
+                        <ItemsControl IsVisible="{Binding HasSelectedDayMiqaats}"
+                                      ItemsSource="{Binding SelectedDayMiqaats}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:MiqaatItem">
+                                    <Border Background="{DynamicResource TaskItemBgBrush}"
+                                            BorderBrush="{DynamicResource CardBorderBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="10"
+                                            Padding="14,10"
+                                            Margin="0,0,0,6">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <!-- Phase Badge (Day / Night) -->
+                                            <Border Grid.Column="0"
+                                                    Background="#20B3822E"
+                                                    BorderBrush="{DynamicResource BronzeBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="6"
+                                                    Padding="8,4"
+                                                    VerticalAlignment="Center"
+                                                    Margin="0,0,14,0">
+                                                <TextBlock Text="{Binding PhaseBadge}"
+                                                           FontSize="11" FontWeight="Bold"
+                                                           Foreground="{DynamicResource BronzeBrush}" />
+                                            </Border>
+
+                                            <!-- Miqaat Title & Description -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                                <TextBlock Text="{Binding Title}"
+                                                           FontSize="14" FontWeight="Bold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding Description}"
+                                                           IsVisible="{Binding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty state if no Miqaats on this day -->
+                        <Border IsVisible="{Binding !HasSelectedDayMiqaats}"
+                                Background="#0A000000"
+                                CornerRadius="10"
+                                Padding="16,12">
+                            <TextBlock Text="No specific Miqaat recorded for this date."
+                                       FontSize="13" Foreground="{DynamicResource TextMutedBrush}"
+                                       FontStyle="Italic" />
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

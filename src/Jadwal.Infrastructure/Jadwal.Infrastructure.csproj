@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\..\data\timetable.json" Link="Resources\timetable.json" />
+    <EmbeddedResource Include="..\..\data\miqaats.json" Link="Resources\miqaats.json" />
   </ItemGroup>
 
   <PropertyGroup>
