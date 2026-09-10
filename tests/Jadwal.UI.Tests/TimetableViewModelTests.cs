@@ -149,5 +149,52 @@ public class TimetableViewModelTests
         vm.Row3Cards[1].Period.PeriodName.Should().Be("Period 9");
         vm.Row3Cards[2].Period.PeriodName.Should().Be("Period 8");
     }
+
+    [Fact]
+    public async Task TimetableViewModel_Cards_Use12HourAmPm_And_SyncStatusWithComputerTime()
+    {
+        var periods = new List<PeriodOccurrence>
+        {
+            new("p1", JadwalDayOfWeek.Monday, "2026-09-14", "Period 1", "08:00", "08:45", "Subject 1", "Room A"),
+            new("p2", JadwalDayOfWeek.Monday, "2026-09-14", "Period 2", "14:00", "14:45", "Subject 2", "Room B")
+        };
+        var snapshot = new TimetableSnapshot("1446-1447", 1, periods, DateTime.UtcNow);
+        var taskRepo = new MemoryTaskRepo();
+        var timeRepo = new MemoryTimetableRepo(snapshot);
+        var changeRepo = new MemoryChangeRepo();
+        var dummyProvider = new DummyJamiaProvider();
+        var timeProvider = new TestTimeProvider();
+
+        var card1 = new ClassCardItemViewModel(periods[0], ClassLiveStatus.Upcoming);
+        var card2 = new ClassCardItemViewModel(periods[1], ClassLiveStatus.Upcoming);
+
+        // Verify 12H AM/PM formatting
+        card1.StartTime12H.Should().Be("8:00 AM");
+        card1.EndTime12H.Should().Be("8:45 AM");
+        card1.EndTimeDisplay.Should().Be("Ends 8:45 AM");
+        card1.TimeRangeFormatted.Should().Be("8:00 AM – 8:45 AM");
+
+        card2.StartTime12H.Should().Be("2:00 PM");
+        card2.EndTime12H.Should().Be("2:45 PM");
+        card2.EndTimeDisplay.Should().Be("Ends 2:45 PM");
+        card2.TimeRangeFormatted.Should().Be("2:00 PM – 2:45 PM");
+
+        // Verify live status sync with computer clock
+        // Time is 08:15 AM -> card1 should be IN SESSION
+        card1.UpdateStatus(new TimeOnly(8, 15));
+        card1.Status.Kind.Should().Be(ClassStatusKind.InProgress);
+        card1.StatusText.Should().Be("IN SESSION");
+
+        // Time is 09:00 AM -> card1 should be DONE
+        card1.UpdateStatus(new TimeOnly(9, 0));
+        card1.Status.Kind.Should().Be(ClassStatusKind.Completed);
+        card1.StatusText.Should().Be("DONE");
+
+        // Time is 01:50 PM -> card2 should be StartingSoon (10m)
+        card2.UpdateStatus(new TimeOnly(13, 50));
+        card2.Status.Kind.Should().Be(ClassStatusKind.StartingSoon);
+        card2.StatusText.Should().Be("IN 10M");
+    }
 }
+
 

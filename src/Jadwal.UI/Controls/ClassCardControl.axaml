@@ -34,7 +34,7 @@
                                        FontSize="11" FontWeight="Bold"
                                        Foreground="{DynamicResource BronzeBrush}" />
                         </Border>
-                        <TextBlock Text="{Binding Period.StartTime}"
+                        <TextBlock Text="{Binding StartTime12H}"
                                    FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
                                    VerticalAlignment="Center" Margin="4,0,0,0" />
                     </StackPanel>
@@ -69,7 +69,7 @@
                 <!-- Bottom Row: Time End & Tasks Flip Button -->
                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
-                               Text="{Binding Period.EndTime, StringFormat='Ends {0}'}"
+                               Text="{Binding EndTimeDisplay}"
                                FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
                                VerticalAlignment="Center" />
 

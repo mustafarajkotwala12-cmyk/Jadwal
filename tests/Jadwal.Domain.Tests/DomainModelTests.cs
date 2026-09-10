@@ -215,4 +215,50 @@ public class DomainModelTests
         three.Break2!.Name.Should().Contain("Jumua");
         three.Row3Items.Should().HaveCount(3);
     }
+
+    [Fact]
+    public void PeriodOccurrence_FormatTo12Hour_FormatsCorrectly()
+    {
+        PeriodOccurrence.FormatTo12Hour("06:00").Should().Be("6:00 AM");
+        PeriodOccurrence.FormatTo12Hour("08:00").Should().Be("8:00 AM");
+        PeriodOccurrence.FormatTo12Hour("08:45").Should().Be("8:45 AM");
+        PeriodOccurrence.FormatTo12Hour("12:40").Should().Be("12:40 PM");
+        PeriodOccurrence.FormatTo12Hour("14:00").Should().Be("2:00 PM");
+        PeriodOccurrence.FormatTo12Hour("15:30").Should().Be("3:30 PM");
+        PeriodOccurrence.FormatTo12Hour("23:15").Should().Be("11:15 PM");
+        PeriodOccurrence.FormatTo12Hour("00:30").Should().Be("12:30 AM");
+
+        var period = new PeriodOccurrence("p1", JadwalDayOfWeek.Monday, "2026-09-14", "Period 1", "08:00", "14:00", "Quran", "Room A");
+        period.StartTime12H.Should().Be("8:00 AM");
+        period.EndTime12H.Should().Be("2:00 PM");
+    }
+
+    [Fact]
+    public void BreakBarInfo_TimeRangeFormatted_Uses12HourAmPm()
+    {
+        var breakInfo = new BreakBarInfo(
+            Id: "break_recess",
+            Name: "Recess Break",
+            NamaazNote: "Refreshment",
+            StartTime: "10:35",
+            EndTime: "10:55",
+            DurationMinutes: 20,
+            Icon: "☕"
+        );
+
+        breakInfo.TimeRangeFormatted.Should().Be("10:35 AM – 10:55 AM");
+
+        var lunchBreak = new BreakBarInfo(
+            Id: "break_lunch",
+            Name: "Lunch & Namaz",
+            NamaazNote: "🕌 Zohr",
+            StartTime: "12:40",
+            EndTime: "14:00",
+            DurationMinutes: 80,
+            Icon: "☀️"
+        );
+
+        lunchBreak.TimeRangeFormatted.Should().Be("12:40 PM – 2:00 PM");
+    }
 }
+

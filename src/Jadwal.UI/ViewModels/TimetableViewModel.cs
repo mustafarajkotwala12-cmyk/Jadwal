@@ -86,15 +86,65 @@ public partial class TimetableViewModel : ViewModelBase
         _timeProvider = timeProvider;
     }
 
+    private Avalonia.Threading.DispatcherTimer? _clockTimer;
+    private JadwalDayOfWeek _currentLoadedDay;
+
     public async Task InitializeAsync()
     {
-        SelectedDay = _timeProvider.CurrentDayOfWeek switch
+        _currentLoadedDay = _timeProvider.CurrentDayOfWeek switch
+        {
+            JadwalDayOfWeek.Sunday => JadwalDayOfWeek.Monday,
+            var d => d
+        };
+        SelectedDay = _currentLoadedDay;
+
+        await LoadDayScheduleAsync();
+        StartClockTimer();
+    }
+
+    public void StartClockTimer()
+    {
+        if (_clockTimer == null)
+        {
+            _clockTimer = new Avalonia.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(1)
+            };
+            _clockTimer.Tick += (s, e) => OnTick();
+            _clockTimer.Start();
+        }
+    }
+
+    public void StopClockTimer()
+    {
+        _clockTimer?.Stop();
+        _clockTimer = null;
+    }
+
+    private void OnTick()
+    {
+        var currentDay = _timeProvider.CurrentDayOfWeek switch
         {
             JadwalDayOfWeek.Sunday => JadwalDayOfWeek.Monday,
             var d => d
         };
 
-        await LoadDayScheduleAsync();
+        if (currentDay != _currentLoadedDay)
+        {
+            _currentLoadedDay = currentDay;
+            _ = LoadDayScheduleAsync();
+            return;
+        }
+
+        // When viewing today's day schedule, sync live card statuses with current computer time
+        if (SelectedDay == _timeProvider.CurrentDayOfWeek)
+        {
+            var now = _timeProvider.CurrentTime;
+            PhysicalEducationCard?.UpdateStatus(now);
+            foreach (var card in Row1Cards) card.UpdateStatus(now);
+            foreach (var card in Row2Cards) card.UpdateStatus(now);
+            foreach (var card in Row3Cards) card.UpdateStatus(now);
+        }
     }
 
     partial void OnSelectedDayChanged(JadwalDayOfWeek value)

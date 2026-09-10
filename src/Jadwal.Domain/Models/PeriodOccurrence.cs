@@ -58,10 +58,33 @@ public record PeriodOccurrence
             : id;
     }
 
+    [JsonIgnore]
+    public string StartTime12H => FormatTo12Hour(StartTime);
+
+    [JsonIgnore]
+    public string EndTime12H => FormatTo12Hour(EndTime);
+
     public static string ComputeDeterministicId(string? dateString, string? periodName)
     {
         var safeDate = (dateString ?? string.Empty).Trim();
         var safePeriod = (periodName ?? string.Empty).Trim().Replace(" ", "_");
         return $"{safeDate}_{safePeriod}";
+    }
+
+    public static string FormatTo12Hour(string? timeStr)
+    {
+        if (string.IsNullOrWhiteSpace(timeStr)) return string.Empty;
+        var trimmed = timeStr.Trim();
+        if (TimeOnly.TryParse(trimmed, System.Globalization.CultureInfo.InvariantCulture, out var t) ||
+            TimeOnly.TryParse(trimmed, out t))
+        {
+            return t.ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+        }
+        if (DateTime.TryParse(trimmed, System.Globalization.CultureInfo.InvariantCulture, out var dt) ||
+            DateTime.TryParse(trimmed, out dt))
+        {
+            return dt.ToString("h:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+        }
+        return trimmed;
     }
 }

@@ -15,7 +15,36 @@ public class ClassCardItemViewModel : ObservableObject
     private readonly Action? _onTaskChanged;
 
     public PeriodOccurrence Period { get; }
-    public ClassLiveStatus Status { get; set; }
+    
+    private ClassLiveStatus _status;
+    public ClassLiveStatus Status
+    {
+        get => _status;
+        set
+        {
+            if (SetProperty(ref _status, value))
+            {
+                OnPropertyChanged(nameof(StatusText));
+            }
+        }
+    }
+
+    public string StartTime12H => PeriodOccurrence.FormatTo12Hour(Period.StartTime);
+    public string EndTime12H => PeriodOccurrence.FormatTo12Hour(Period.EndTime);
+    public string EndTimeDisplay => $"Ends {EndTime12H}";
+    public string TimeRangeFormatted => $"{StartTime12H} – {EndTime12H}";
+
+    public void UpdateStatus(TimeOnly now)
+    {
+        if (Period.ChangeRecord != null)
+        {
+            Status = ClassLiveStatus.Changed;
+        }
+        else
+        {
+            Status = ClassLiveStatus.Compute(Period.StartTime, Period.EndTime, now);
+        }
+    }
 
     private bool _isFlipped;
     public bool IsFlipped
@@ -40,7 +69,7 @@ public class ClassCardItemViewModel : ObservableObject
         Action? onTaskChanged = null)
     {
         Period = period;
-        Status = status;
+        _status = status;
         _taskService = taskService;
         _onTaskChanged = onTaskChanged;
 
@@ -149,7 +178,7 @@ public class BreakPillItemViewModel
         Break.Name.Contains("Morning", StringComparison.OrdinalIgnoreCase) ? "🌅" :
         Break.Name.Contains("Recess", StringComparison.OrdinalIgnoreCase) ? "☕" : "⏸️";
 
-    public string TimeRange => $"{Break.StartTime} – {Break.EndTime}";
+    public string TimeRange => $"{PeriodOccurrence.FormatTo12Hour(Break.StartTime)} – {PeriodOccurrence.FormatTo12Hour(Break.EndTime)}";
 
     public string DurationFormatted => ScheduleTimelineBuilder.FormatDuration(Break.DurationMinutes);
 }
@@ -158,23 +187,26 @@ public partial class TodayViewModel : ViewModelBase
 {
     private readonly DashboardService _dashboardService;
     private readonly TaskService _taskService;
-    private readonly TimetableService _timetableService;
     private readonly ITimeProvider _timeProvider;
+    private readonly TimetableService? _timetableService;
+
+    private int _tickCount;
+    private JadwalDayOfWeek _loadedDay;
 
     [ObservableProperty]
-    private string _englishDate = string.Empty;
-
-    [ObservableProperty]
-    private string _arabicWeekday = string.Empty;
-
-    [ObservableProperty]
-    private string _daySubtitle = string.Empty;
+    private string _currentDateString = string.Empty;
 
     [ObservableProperty]
     private string _currentTimeString = string.Empty;
 
     [ObservableProperty]
-    private string _activeStatusDescription = "No classes active";
+    private string _arabicWeekday = string.Empty;
+
+    [ObservableProperty]
+    private string _englishDate = string.Empty;
+
+    [ObservableProperty]
+    private string _daySubtitle = string.Empty;
 
     [ObservableProperty]
     private string _row1Title = string.Empty;
@@ -183,34 +215,37 @@ public partial class TodayViewModel : ViewModelBase
     private string _row2Title = string.Empty;
 
     [ObservableProperty]
-    private bool _hasChanges = false;
+    private string _activeStatusDescription = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasChanges;
 
     [ObservableProperty]
     private string _changesSummary = string.Empty;
 
     [ObservableProperty]
-    private bool _isEmptyDay = false;
+    private bool _hasPhysicalEducation;
 
     [ObservableProperty]
     private ClassCardItemViewModel? _physicalEducationCard;
 
     [ObservableProperty]
-    private bool _hasPhysicalEducation = false;
-
-    [ObservableProperty]
     private BreakBarViewModel? _break1;
 
     [ObservableProperty]
-    private bool _hasBreak1 = false;
+    private bool _hasBreak1;
 
     [ObservableProperty]
     private BreakBarViewModel? _break2;
 
     [ObservableProperty]
-    private bool _hasBreak2 = false;
+    private bool _hasBreak2;
 
     [ObservableProperty]
-    private bool _hasRow3 = false;
+    private bool _hasRow3;
+
+    [ObservableProperty]
+    private bool _isEmptyDay;
 
     public ObservableCollection<ClassCardItemViewModel> Row1Cards { get; } = new();
     public ObservableCollection<ClassCardItemViewModel> Row2Cards { get; } = new();
@@ -220,7 +255,6 @@ public partial class TodayViewModel : ViewModelBase
     public ObservableCollection<object> Row2Items { get; } = new();
 
     private Avalonia.Threading.DispatcherTimer? _clockTimer;
-    private int _tickCount = 0;
 
     public TodayViewModel(
         DashboardService dashboardService,
@@ -232,7 +266,8 @@ public partial class TodayViewModel : ViewModelBase
         _taskService = taskService;
         _timetableService = timetableService;
         _timeProvider = timeProvider;
-        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt");
+
+        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public async Task InitializeAsync()
@@ -262,12 +297,36 @@ public partial class TodayViewModel : ViewModelBase
 
     public void OnTick()
     {
-        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt");
+        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
         _tickCount++;
+
+        // Sync date/day change if computer clock crossed midnight
+        if (_timeProvider.CurrentDayOfWeek != _loadedDay)
+        {
+            _ = RefreshScheduleAsync();
+            return;
+        }
+
+        // Keep all card statuses updated in sync with computer clock every 5 seconds
+        if (_tickCount % 5 == 0)
+        {
+            UpdateLiveStatuses();
+        }
+
+        // Full refresh periodically (every 30 seconds)
         if (_tickCount % 30 == 0)
         {
             _ = RefreshScheduleAsync();
         }
+    }
+
+    public void UpdateLiveStatuses()
+    {
+        var now = _timeProvider.CurrentTime;
+        PhysicalEducationCard?.UpdateStatus(now);
+        foreach (var card in Row1Cards) card.UpdateStatus(now);
+        foreach (var card in Row2Cards) card.UpdateStatus(now);
+        foreach (var card in Row3Cards) card.UpdateStatus(now);
     }
 
     [RelayCommand]
@@ -276,10 +335,11 @@ public partial class TodayViewModel : ViewModelBase
         var dto = await _dashboardService.GetTodayClassTimetableAsync();
         var allTasks = await _taskService.GetAllTasksAsync();
 
+        _loadedDay = dto.Day;
         EnglishDate = DateTime.Now.ToString("dddd, d MMMM yyyy");
         ArabicWeekday = dto.Day.ToArabicString();
         DaySubtitle = dto.Rule.DaySubtitle;
-        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt");
+        CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
         Row1Title = dto.Rule.Row1Title;
         Row2Title = dto.Rule.Row2Title;
 

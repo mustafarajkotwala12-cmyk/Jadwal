@@ -36,7 +36,7 @@ public partial class MenuBarViewModel : ViewModelBase
 
         if (summary.NextOrCurrentClass != null)
         {
-            CurrentStatusText = $"{summary.NextOrCurrentClass.PeriodName}: {summary.NextOrCurrentClass.Subject} ({summary.NextOrCurrentClass.StartTime})";
+            CurrentStatusText = $"{summary.NextOrCurrentClass.PeriodName}: {summary.NextOrCurrentClass.Subject} ({summary.NextOrCurrentClass.StartTime12H})";
             TrayTitle = $"Jadwal: {summary.NextOrCurrentClass.Subject}";
         }
         else

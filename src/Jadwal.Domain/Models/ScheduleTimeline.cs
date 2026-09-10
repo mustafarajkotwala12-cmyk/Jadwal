@@ -371,7 +371,7 @@ public record BreakBarInfo(
     string Icon
 )
 {
-    public string TimeRangeFormatted => $"{StartTime} – {EndTime}";
+    public string TimeRangeFormatted => $"{PeriodOccurrence.FormatTo12Hour(StartTime)} – {PeriodOccurrence.FormatTo12Hour(EndTime)}";
     public string DurationFormatted => ScheduleTimelineBuilder.FormatDuration(DurationMinutes);
 }
 

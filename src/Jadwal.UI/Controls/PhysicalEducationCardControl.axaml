@@ -57,7 +57,7 @@
                 <!-- Bottom Row: Time Range & Tasks Flip Pill -->
                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                     <TextBlock Grid.Column="0"
-                               Text="{Binding Period.StartTime, StringFormat='{}{0} - 07:00'}"
+                               Text="{Binding TimeRangeFormatted}"
                                FontFamily="Courier New, monospace"
                                FontSize="9" Foreground="{DynamicResource TextMutedBrush}"
                                VerticalAlignment="Center" />
