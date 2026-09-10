@@ -3,17 +3,25 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:Jadwal.UI.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="160"
+             xmlns:models="using:Jadwal.Domain.Models"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="165"
              x:Class="Jadwal.UI.Controls.ClassCardControl"
              x:DataType="vm:ClassCardItemViewModel">
 
-    <Border Width="210" Height="155"
+    <Border Width="215" Height="165"
             CornerRadius="14"
             BorderThickness="1.5"
             BorderBrush="{DynamicResource CardBorderBrush}"
-            Background="{DynamicResource SystemAltHighColor}"
-            BoxShadow="0 4 12 0 #15000000"
+            Background="{DynamicResource CardBackgroundBrush}"
+            BoxShadow="0 4 14 0 #12000000"
             Margin="6">
+        <Border.Transitions>
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+            </Transitions>
+        </Border.Transitions>
+
         <Panel>
             <!-- FRONT FACE: CLASS DETAILS -->
             <Grid RowDefinitions="Auto,*,Auto" Margin="12" IsVisible="{Binding !IsFlipped}">
@@ -27,7 +35,7 @@
                                        Foreground="{DynamicResource BronzeBrush}" />
                         </Border>
                         <TextBlock Text="{Binding Period.StartTime}"
-                                   FontSize="11" Foreground="#718096"
+                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
                                    VerticalAlignment="Center" Margin="4,0,0,0" />
                     </StackPanel>
 
@@ -42,16 +50,17 @@
                 </Grid>
 
                 <!-- Middle: Arabic Subject in Kanz-al-Lulu -->
-                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,6,0,6">
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,4">
                     <TextBlock Text="{Binding Period.Subject}"
                                FontFamily="{StaticResource ArabicCalligraphyFont}"
                                FontSize="24" FontWeight="SemiBold"
                                TextAlignment="Center"
                                TextWrapping="NoWrap"
                                TextTrimming="CharacterEllipsis"
-                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
                     <TextBlock Text="{Binding Period.Details}"
-                               FontSize="11" Foreground="#718096"
+                               FontFamily="{StaticResource ArabicCalligraphyFont}"
+                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                                TextAlignment="Center"
                                TextTrimming="CharacterEllipsis"
                                Margin="0,2,0,0" />
@@ -61,55 +70,114 @@
                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
                                Text="{Binding Period.EndTime, StringFormat='Ends {0}'}"
-                               FontSize="10" Foreground="#A0AEC0"
+                               FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
                                VerticalAlignment="Center" />
 
                     <Button Grid.Column="1"
                             Classes="flat"
-                            Padding="6,2"
+                            Padding="6,3"
                             CornerRadius="8"
-                            Background="#10C29447"
+                            Background="{DynamicResource BronzeSoftBrush}"
                             Click="OnFlipClicked">
                         <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="📋" FontSize="10" />
-                            <TextBlock Text="{Binding Tasks.Count, StringFormat='{}{0} tasks'}"
-                                       FontSize="10" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource BronzeBrush}" />
+                            <TextBlock Text="📋" FontSize="10" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding TasksCountText}"
+                                       FontSize="10" FontWeight="Bold"
+                                       Foreground="{DynamicResource BronzeBrush}"
+                                       VerticalAlignment="Center" />
                         </StackPanel>
                     </Button>
                 </Grid>
             </Grid>
 
-            <!-- BACK FACE: TASKS FOR THIS PERIOD -->
-            <Grid Grid.Row="0" RowDefinitions="Auto,*,Auto" Margin="12" IsVisible="{Binding IsFlipped}">
+            <!-- BACK FACE: SUBJECT TASKS MANAGEMENT -->
+            <Grid Grid.Row="0" RowDefinitions="Auto,*,Auto" Margin="10" IsVisible="{Binding IsFlipped}">
                 <!-- Header -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0" Text="{Binding Period.Subject, StringFormat='Tasks • {0}'}"
-                               FontWeight="Bold" FontSize="12"
-                               Foreground="{DynamicResource BronzeBrush}"
-                               VerticalAlignment="Center" />
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="📋 Tasks •" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource BronzeBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Period.Subject}"
+                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                   FontSize="12" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
                     <Button Grid.Column="1" Content="✕"
-                            Padding="4,2" FontSize="10"
+                            Classes="flat"
+                            Padding="6,2" FontSize="10" FontWeight="Bold"
+                            Background="Transparent"
+                            Foreground="{DynamicResource TextSecondaryBrush}"
                             Click="OnFlipClicked" />
                 </Grid>
 
-                <!-- Task List -->
-                <ScrollViewer Grid.Row="1" Margin="0,6">
-                    <ItemsControl ItemsSource="{Binding Tasks}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,2" Padding="4,2" Background="#0A000000" CornerRadius="4">
-                                    <TextBlock Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                <!-- Task List (Scrollable) -->
+                <ScrollViewer Grid.Row="1" Margin="0,2,0,4" VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <!-- Empty State Notice -->
+                        <TextBlock Text="No tasks for this subject yet."
+                                   IsVisible="{Binding !Tasks.Count}"
+                                   FontSize="10" FontStyle="Italic"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   HorizontalAlignment="Center" Margin="0,16" />
+
+                        <!-- Interactive Task Items -->
+                        <ItemsControl ItemsSource="{Binding Tasks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:TaskItem">
+                                    <Border Margin="0,2" Padding="6,3"
+                                            Background="{DynamicResource TaskItemBgBrush}"
+                                            BorderBrush="{DynamicResource CardBorderBrush}"
+                                            BorderThickness="1" CornerRadius="6">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <!-- Checkbox for completion -->
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsCompleted}"
+                                                      Command="{Binding $parent[UserControl].((vm:ClassCardItemViewModel)DataContext).ToggleTaskCompletionCommand}"
+                                                      CommandParameter="{Binding}"
+                                                      Padding="0" MinWidth="16" Height="16" Margin="0,0,4,0" />
+
+                                            <!-- Task Title -->
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Title}"
+                                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                                       FontSize="11"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+
+                                            <!-- Delete Button -->
+                                            <Button Grid.Column="2" Content="×"
+                                                    Classes="flat" Padding="4,0" FontSize="11"
+                                                    Background="Transparent" Foreground="#D9383A"
+                                                    Command="{Binding $parent[UserControl].((vm:ClassCardItemViewModel)DataContext).DeleteTaskCommand}"
+                                                    CommandParameter="{Binding}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
                 </ScrollViewer>
 
-                <!-- Footer note -->
-                <TextBlock Grid.Row="2" Text="Click ✕ to flip back"
-                           FontSize="9" Foreground="#A0AEC0"
-                           HorizontalAlignment="Center" />
+                <!-- Quick Inline Add Task Input -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                    <TextBox Grid.Column="0"
+                             Text="{Binding NewTaskTitle}"
+                             PlaceholderText="Add task for this subject..."
+                             FontFamily="{StaticResource ArabicCalligraphyFont}"
+                             FontSize="10" Height="26" Padding="6,2"
+                             CornerRadius="6"
+                             KeyDown="OnNewTaskKeyDown" />
+                    <Button Grid.Column="1" Content="+"
+                            Command="{Binding AddTaskCommand}"
+                            Background="{DynamicResource EmeraldBrush}"
+                            Foreground="White" FontWeight="Bold"
+                            Padding="8,2" Height="26" Margin="4,0,0,0"
+                            CornerRadius="6" />
+                </Grid>
             </Grid>
         </Panel>
     </Border>

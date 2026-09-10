@@ -11,6 +11,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ISecureStorage _secureStorage;
     private readonly TimetableService _timetableService;
     private readonly ILegacyMigrationService _legacyMigrator;
+    private readonly ThemeService _themeService;
 
     [ObservableProperty]
     private string _itsId = string.Empty;
@@ -39,16 +40,42 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _migrationReport = string.Empty;
 
+    // Theme properties
+    [ObservableProperty]
+    private string _selectedTheme = "Light";
+
+    [ObservableProperty]
+    private bool _isLightTheme = true;
+
+    [ObservableProperty]
+    private bool _isDarkTheme = false;
+
+    // Credits & About Information
+    public string AppName => "Jadwal (جدول)";
+    public string DeveloperName => "Mustafa Rajkotwala";
+    public string AppVersion => "2.0.0 (LTS)";
+    public string AppSubtitle => "Academic Schedule & Task Companion for Aljamea-tus-Saifiyah";
+
     public Func<Task<string?>>? PickFileHandler { get; set; }
 
     public SettingsViewModel(
         ISecureStorage secureStorage,
         TimetableService timetableService,
-        ILegacyMigrationService legacyMigrator)
+        ILegacyMigrationService legacyMigrator,
+        ThemeService? themeService = null)
     {
         _secureStorage = secureStorage;
         _timetableService = timetableService;
         _legacyMigrator = legacyMigrator;
+        _themeService = themeService ?? new ThemeService();
+
+        var savedTheme = _themeService.GetSavedTheme();
+        SelectedTheme = savedTheme switch
+        {
+            JadwalThemeMode.Dark => "Dark",
+            _ => "Light"
+        };
+        UpdateThemeState(SelectedTheme);
     }
 
     public async Task InitializeAsync()
@@ -70,13 +97,44 @@ public partial class SettingsViewModel : ViewModelBase
         else
         {
             IsCredentialsSaved = false;
-            StoredItsId = string.Empty;
             StoredCredentialStatusText = "No credentials currently saved in OS vault";
         }
 
-        if (!string.IsNullOrWhiteSpace(savedPass))
+        if (!string.IsNullOrEmpty(savedPass))
         {
             Password = savedPass;
+        }
+
+        ApplyTheme(SelectedTheme);
+    }
+
+    [RelayCommand]
+    public void SetTheme(string themeName)
+    {
+        if (string.IsNullOrWhiteSpace(themeName)) return;
+        SelectedTheme = themeName;
+        UpdateThemeState(themeName);
+        ApplyTheme(themeName);
+
+        var mode = themeName == "Dark" ? JadwalThemeMode.Dark : JadwalThemeMode.Light;
+        _themeService.SaveTheme(mode);
+    }
+
+    private void UpdateThemeState(string theme)
+    {
+        IsLightTheme = theme == "Light";
+        IsDarkTheme = theme == "Dark";
+    }
+
+    private void ApplyTheme(string theme)
+    {
+        if (Avalonia.Application.Current != null)
+        {
+            Avalonia.Application.Current.RequestedThemeVariant = theme switch
+            {
+                "Dark" => Avalonia.Styling.ThemeVariant.Dark,
+                _ => Avalonia.Styling.ThemeVariant.Light
+            };
         }
     }
 
@@ -134,7 +192,11 @@ public partial class SettingsViewModel : ViewModelBase
 
         try
         {
-            await SaveCredentialsAsync();
+            if (!string.IsNullOrWhiteSpace(ItsId))
+            {
+                await SaveCredentialsAsync();
+            }
+
             var changes = await _timetableService.RefreshTimetableAsync(forceLogin: true);
             StatusMessage = $"Sync successful! Detected {changes.Count} schedule changes.";
             IsSuccess = true;
@@ -165,7 +227,7 @@ public partial class SettingsViewModel : ViewModelBase
         }
 
         IsBusy = true;
-        StatusMessage = $"Importing timetable from {Path.GetFileName(filePath)}...";
+        StatusMessage = $"Importing timetable from {System.IO.Path.GetFileName(filePath)}...";
         IsSuccess = false;
 
         try
@@ -182,12 +244,12 @@ public partial class SettingsViewModel : ViewModelBase
             }
 
             var count = await _timetableService.SaveImportedSnapshotAsync(snapshot);
-            StatusMessage = $"Timetable imported successfully! Loaded {count} class periods from {Path.GetFileName(filePath)}.";
+            StatusMessage = $"Timetable imported successfully! Loaded {count} class periods from {System.IO.Path.GetFileName(filePath)}.";
             IsSuccess = true;
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Import error: {ex.Message}";
+            StatusMessage = $"Failed to import timetable file: {ex.Message}";
             IsSuccess = false;
         }
         finally
@@ -197,10 +259,13 @@ public partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    public async Task RunLegacyMigrationAsync()
+    public async Task RunLegacyMigrationCommand()
     {
         IsBusy = true;
-        StatusMessage = "Checking for legacy JameaHelper / Jadwal data...";
+        StatusMessage = "Scanning and migrating legacy data...";
+        IsSuccess = false;
+        MigrationReport = string.Empty;
+
         try
         {
             var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -213,18 +278,21 @@ public partial class SettingsViewModel : ViewModelBase
             var result = await _legacyMigrator.MigrateAllAsync(legacyStoreDir);
             if (result.Success)
             {
-                MigrationReport = $"Migration complete: {result.TasksMigrated} tasks migrated. Timetable migrated: {result.TimetableMigrated}. Backup: {result.BackupPath}";
-                StatusMessage = "Legacy migration completed successfully!";
+                MigrationReport = $"Migration complete: {result.TasksMigrated} tasks migrated. Timetable: {(result.TimetableMigrated ? "imported" : "unchanged")}. Backup: {result.BackupPath}";
+                StatusMessage = "Legacy data migration successful!";
                 IsSuccess = true;
             }
             else
             {
-                StatusMessage = $"Migration notice: {result.ErrorMessage ?? "No legacy files found to migrate."}";
+                MigrationReport = $"Migration notice: {result.ErrorMessage ?? "No legacy files found to migrate."}";
+                StatusMessage = "Legacy data migration completed.";
+                IsSuccess = true;
             }
         }
         catch (Exception ex)
         {
             StatusMessage = $"Migration error: {ex.Message}";
+            IsSuccess = false;
         }
         finally
         {

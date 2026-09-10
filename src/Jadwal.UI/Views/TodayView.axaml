@@ -11,11 +11,16 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="20" Margin="24">
 
-            <!-- HERO BANNER: DATE & TIME (FREEFORM TOP SECTION) -->
+            <!-- HERO BANNER: DATE & TIME (FATIMID ILLUMINATED STYLE) -->
             <Border CornerRadius="18"
                     Background="{DynamicResource BannerGradientBrush}"
-                    Padding="24,20"
-                    BoxShadow="0 8 24 0 #20145B96">
+                    Padding="26,20"
+                    BoxShadow="0 8 24 0 #200B4F39">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid ColumnDefinitions="*,Auto">
                     <!-- Left: Arabic Weekday, English Date, Subtitle -->
                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
@@ -25,9 +30,9 @@
                                    Foreground="White" />
                         <TextBlock Text="{Binding EnglishDate}"
                                    FontSize="15" FontWeight="SemiBold"
-                                   Foreground="#E2E8F0" />
+                                   Foreground="#F0F8F5" />
                         <TextBlock Text="{Binding DaySubtitle}"
-                                   FontSize="12" Foreground="#CBD5E1"
+                                   FontSize="12" Foreground="#D5E8DF"
                                    Margin="0,2,0,0" />
                     </StackPanel>
 
@@ -123,15 +128,18 @@
 
             <!-- EMPTY STATE NOTICE -->
             <Border IsVisible="{Binding IsEmptyDay}"
-                    Background="#0A000000" CornerRadius="12"
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
                     Padding="40" HorizontalAlignment="Center" Margin="0,40,0,0">
                 <StackPanel HorizontalAlignment="Center" Spacing="8">
                     <TextBlock Text="📅" FontSize="36" HorizontalAlignment="Center" />
                     <TextBlock Text="No classes scheduled for today."
                                FontWeight="SemiBold" FontSize="16"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
                                HorizontalAlignment="Center" />
-                    <TextBlock Text="Sync with Jamia Portal in Settings to load your schedule."
-                               FontSize="12" Foreground="#718096"
+                    <TextBlock Text="Sync with Jamia Portal or import a timetable file in Settings to load your schedule."
+                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
                                HorizontalAlignment="Center" />
                 </StackPanel>
             </Border>

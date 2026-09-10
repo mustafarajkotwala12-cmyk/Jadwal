@@ -1,40 +1,94 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- Brand Palette Colors -->
-    <Color x:Key="EmeraldColor">#147A5C</Color>
-    <Color x:Key="EmeraldSoftColor">#20147A5C</Color>
-    <Color x:Key="BronzeColor">#C29447</Color>
-    <Color x:Key="BronzeSoftColor">#25C29447</Color>
-    <Color x:Key="GoldColor">#E0B540</Color>
-    <Color x:Key="GoldSoftColor">#25E0B540</Color>
-    <Color x:Key="CyanBlueColor">#1E87C7</Color>
-    <Color x:Key="DeepNavyColor">#145F96</Color>
-    <Color x:Key="CardBorderColor">#25C29447</Color>
+    <!-- Arabic Calligraphy Font Family (Kanz-al-Lulu with fallbacks) -->
+    <FontFamily x:Key="ArabicCalligraphyFont">avares://Jadwal.UI/Assets/KanzalLulu-Regular.ttf#Kanz-al-Lulu, "Kanz-al-Lulu", "Traditional Arabic", "Scheherazade New", Arial</FontFamily>
 
-    <!-- Solid Color Brushes -->
+    <!-- Base Fallback Colors (Default to Fatimid Palette) -->
+    <Color x:Key="EmeraldColor">#0D5C43</Color>
+    <Color x:Key="EmeraldSoftColor">#200D5C43</Color>
+    <Color x:Key="BronzeColor">#B3822E</Color>
+    <Color x:Key="BronzeSoftColor">#22B3822E</Color>
+    <Color x:Key="GoldColor">#CFA342</Color>
+    <Color x:Key="GoldSoftColor">#25CFA342</Color>
+    <Color x:Key="CyanBlueColor">#167154</Color>
+    <Color x:Key="DeepNavyColor">#072B20</Color>
+    <Color x:Key="CardBorderColor">#30C29447</Color>
+
+    <!-- Theme Dictionaries for Light (Fatimid Ivory) and Dark (Fatimid Obsidian) -->
+    <ResourceDictionary.ThemeDictionaries>
+        <!-- LIGHT: Fatimid Manuscript Ivory & Regal Emerald -->
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="PageBackgroundBrush" Color="#F7F5F0" />
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="CardBorderBrush" Color="#30C29447" />
+            <SolidColorBrush x:Key="TaskItemBgBrush" Color="#080D5C43" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#162621" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#54655E" />
+            <SolidColorBrush x:Key="TextMutedBrush" Color="#8C9C95" />
+            <SolidColorBrush x:Key="EmeraldBrush" Color="#0D5C43" />
+            <SolidColorBrush x:Key="EmeraldSoftBrush" Color="#1E0D5C43" />
+            <SolidColorBrush x:Key="BronzeBrush" Color="#B3822E" />
+            <SolidColorBrush x:Key="BronzeSoftBrush" Color="#22B3822E" />
+            <SolidColorBrush x:Key="GoldBrush" Color="#CFA342" />
+            <SolidColorBrush x:Key="GoldSoftBrush" Color="#25CFA342" />
+            <SolidColorBrush x:Key="SidebarBgBrush" Color="#0A392B" />
+            <SolidColorBrush x:Key="SidebarTextBrush" Color="#F1F5F3" />
+            <SolidColorBrush x:Key="SidebarTextMutedBrush" Color="#A5B8B0" />
+            <SolidColorBrush x:Key="NavHoverBrush" Color="#1AFFFFFF" />
+            <SolidColorBrush x:Key="CardShadowBrush" Color="#14000000" />
+
+            <LinearGradientBrush x:Key="BannerGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#0B4F39" Offset="0.0" />
+                <GradientStop Color="#167154" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="SidebarGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#0C4534" Offset="0.0" />
+                <GradientStop Color="#072B20" Offset="1.0" />
+            </LinearGradientBrush>
+        </ResourceDictionary>
+
+        <!-- DARK: Fatimid Obsidian Emerald & Glowing Gold -->
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="PageBackgroundBrush" Color="#09120F" />
+            <SolidColorBrush x:Key="CardBackgroundBrush" Color="#111E19" />
+            <SolidColorBrush x:Key="CardBorderBrush" Color="#384D3E" />
+            <SolidColorBrush x:Key="TaskItemBgBrush" Color="#14FFFFFF" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#F1F6F3" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#99A8A1" />
+            <SolidColorBrush x:Key="TextMutedBrush" Color="#667770" />
+            <SolidColorBrush x:Key="EmeraldBrush" Color="#1FA880" />
+            <SolidColorBrush x:Key="EmeraldSoftBrush" Color="#251FA880" />
+            <SolidColorBrush x:Key="BronzeBrush" Color="#D9A855" />
+            <SolidColorBrush x:Key="BronzeSoftBrush" Color="#25D9A855" />
+            <SolidColorBrush x:Key="GoldBrush" Color="#ECC563" />
+            <SolidColorBrush x:Key="GoldSoftBrush" Color="#25ECC563" />
+            <SolidColorBrush x:Key="SidebarBgBrush" Color="#050E0B" />
+            <SolidColorBrush x:Key="SidebarTextBrush" Color="#F1F5F3" />
+            <SolidColorBrush x:Key="SidebarTextMutedBrush" Color="#8E9E96" />
+            <SolidColorBrush x:Key="NavHoverBrush" Color="#1AFFFFFF" />
+            <SolidColorBrush x:Key="CardShadowBrush" Color="#30000000" />
+
+            <LinearGradientBrush x:Key="BannerGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#093C2C" Offset="0.0" />
+                <GradientStop Color="#105C43" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="SidebarGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+                <GradientStop Color="#071511" Offset="0.0" />
+                <GradientStop Color="#030907" Offset="1.0" />
+            </LinearGradientBrush>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <!-- Default Fallbacks for unstyled scopes -->
     <SolidColorBrush x:Key="EmeraldBrush" Color="{StaticResource EmeraldColor}" />
     <SolidColorBrush x:Key="EmeraldSoftBrush" Color="{StaticResource EmeraldSoftColor}" />
     <SolidColorBrush x:Key="BronzeBrush" Color="{StaticResource BronzeColor}" />
     <SolidColorBrush x:Key="BronzeSoftBrush" Color="{StaticResource BronzeSoftColor}" />
     <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource GoldColor}" />
     <SolidColorBrush x:Key="GoldSoftBrush" Color="{StaticResource GoldSoftColor}" />
-    <SolidColorBrush x:Key="CyanBlueBrush" Color="{StaticResource CyanBlueColor}" />
-    <SolidColorBrush x:Key="DeepNavyBrush" Color="{StaticResource DeepNavyColor}" />
     <SolidColorBrush x:Key="CardBorderBrush" Color="{StaticResource CardBorderColor}" />
-
-    <!-- Gradient Brushes -->
-    <LinearGradientBrush x:Key="BannerGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
-        <GradientStop Color="#1F8AC9" Offset="0.0" />
-        <GradientStop Color="#145B96" Offset="1.0" />
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="SidebarGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
-        <GradientStop Color="#0F172A" Offset="0.0" />
-        <GradientStop Color="#1E293B" Offset="1.0" />
-    </LinearGradientBrush>
-
-    <!-- Arabic Calligraphy Font Family -->
-    <FontFamily x:Key="ArabicCalligraphyFont">avares://Jadwal.UI/Assets#Kanz-al-Lulu, avares://Jadwal.UI/Assets/KanzalLulu-Regular.ttf#Kanz-al-Lulu, "Traditional Arabic", "Scheherazade New", Arial</FontFamily>
 
 </ResourceDictionary>

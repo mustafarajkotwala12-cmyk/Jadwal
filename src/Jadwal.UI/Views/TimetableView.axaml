@@ -14,29 +14,49 @@
             <!-- HEADER & DAY SELECTOR TABS -->
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
-                    <!-- Day Selector Buttons -->
-                    <ItemsControl ItemsSource="{Binding AvailableDays}">
+                    <!-- Day Selector Buttons with Kanz-al-Lulu Arabic Typography -->
+                    <ItemsControl ItemsSource="{Binding DayTabs}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <StackPanel Orientation="Horizontal" Spacing="6" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding}"
-                                        Command="{Binding $parent[UserControl].((vm:TimetableViewModel)DataContext).SelectDayCommand}"
+                            <DataTemplate DataType="vm:DayTabViewModel">
+                                <Button Command="{Binding $parent[UserControl].((vm:TimetableViewModel)DataContext).SelectDayTabCommand}"
                                         CommandParameter="{Binding}"
-                                        Padding="14,8" CornerRadius="10"
-                                        FontWeight="SemiBold" FontSize="13" />
+                                        Padding="12,6" CornerRadius="10"
+                                        Background="{DynamicResource CardBackgroundBrush}"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
+                                        BorderThickness="1">
+                                    <Button.Transitions>
+                                        <Transitions>
+                                            <BrushTransition Property="Background" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                                            <BrushTransition Property="BorderBrush" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                                        </Transitions>
+                                    </Button.Transitions>
+                                    <StackPanel Spacing="1" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding ArabicName}"
+                                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                                   FontSize="14" FontWeight="Bold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding EnglishName}"
+                                                   FontSize="9" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
 
-                <!-- Search box -->
+                <!-- Search box with Arabic Font Support -->
                 <TextBox Grid.Column="1"
                          Text="{Binding SearchText}"
-                         PlaceholderText="Search subject, details..."
+                         FontFamily="{StaticResource ArabicCalligraphyFont}"
+                         PlaceholderText="Search subject, ustaadh, room..."
                          Width="240" CornerRadius="8"
                          VerticalAlignment="Center" />
             </Grid>
@@ -44,8 +64,13 @@
             <!-- SELECTED DAY BANNER -->
             <Border CornerRadius="16"
                     Background="{DynamicResource BannerGradientBrush}"
-                    Padding="20,16"
-                    BoxShadow="0 4 16 0 #20145B96">
+                    Padding="22,16"
+                    BoxShadow="0 6 20 0 #200B4F39">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.3" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel Grid.Column="0" Spacing="2">
                         <TextBlock Text="{Binding DayArabicTitle}"
@@ -53,12 +78,12 @@
                                    FontSize="28" FontWeight="Bold"
                                    Foreground="White" />
                         <TextBlock Text="{Binding DayTitle}"
-                                   FontSize="16" FontWeight="SemiBold"
-                                   Foreground="#E2E8F0" />
+                                   FontSize="15" FontWeight="SemiBold"
+                                   Foreground="#F0F8F5" />
                     </StackPanel>
                     <TextBlock Grid.Column="1"
                                Text="{Binding DaySubtitle}"
-                               FontSize="13" Foreground="#CBD5E1"
+                               FontSize="12" Foreground="#D5E8DF"
                                VerticalAlignment="Center" />
                 </Grid>
             </Border>
@@ -117,10 +142,13 @@
 
             <!-- EMPTY DAY NOTICE -->
             <Border IsVisible="{Binding IsEmptyDay}"
-                    Background="#0A000000" CornerRadius="12"
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
                     Padding="40" HorizontalAlignment="Center" Margin="0,40,0,0">
-                <TextBlock Text="No classes matching this schedule."
+                <TextBlock Text="No classes scheduled for this day."
                            FontWeight="SemiBold" FontSize="15"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
                            HorizontalAlignment="Center" />
             </Border>
 

@@ -9,6 +9,7 @@
         Title="Jadwal (جدول)"
         Width="1100" Height="750"
         MinWidth="900" MinHeight="600"
+        Background="{DynamicResource PageBackgroundBrush}"
         WindowStartupLocation="CenterScreen">
     <views:MainView Name="MainViewControl" />
 </Window>

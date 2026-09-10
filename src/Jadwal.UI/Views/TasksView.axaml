@@ -15,7 +15,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                 <StackPanel Grid.Column="0" Spacing="2">
                     <TextBlock Text="Tasks &amp; Homework" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
-                    <TextBlock Text="Manage academic deliverables and subject discrepancies" FontSize="12" Foreground="#718096" />
+                    <TextBlock Text="Manage academic deliverables and subject assignments" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
                 </StackPanel>
 
                 <!-- Status Filter Pills -->
@@ -47,39 +47,50 @@
 
             <!-- COLLAPSIBLE ADD TASK PANEL -->
             <Border IsVisible="{Binding IsAddingTask}"
-                    Background="{DynamicResource SystemAltHighColor}"
+                    Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource CardBorderBrush}"
                     BorderThickness="1.5" CornerRadius="14"
                     Padding="18" BoxShadow="0 4 16 0 #15000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <StackPanel Spacing="12">
                     <TextBlock Text="Add New Task" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource BronzeBrush}" />
 
-                    <TextBox Text="{Binding NewTaskTitle}" PlaceholderText="Task title (e.g. Prepare lesson summary)" />
+                    <TextBox Text="{Binding NewTaskTitle}"
+                             FontFamily="{StaticResource ArabicCalligraphyFont}"
+                             PlaceholderText="Task title (e.g. درس حفظ or Prepare lesson summary)" />
 
                     <Grid ColumnDefinitions="*,*,*">
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Subject" FontSize="11" Foreground="#718096" Margin="0,0,0,4" />
+                            <TextBlock Text="Subject" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding AvailableSubjects}"
                                       SelectedItem="{Binding NewTaskSubject}"
+                                      FontFamily="{StaticResource ArabicCalligraphyFont}"
                                       HorizontalAlignment="Stretch" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="1" Margin="4,0,4,0">
-                            <TextBlock Text="Priority" FontSize="11" Foreground="#718096" Margin="0,0,0,4" />
+                            <TextBlock Text="Priority" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding PriorityOptions}"
                                       SelectedItem="{Binding NewTaskPriority}"
                                       HorizontalAlignment="Stretch" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2" Margin="8,0,0,0">
-                            <TextBlock Text="Category" FontSize="11" Foreground="#718096" Margin="0,0,0,4" />
+                            <TextBlock Text="Category" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding CategoryOptions}"
                                       SelectedItem="{Binding NewTaskCategory}"
                                       HorizontalAlignment="Stretch" />
                         </StackPanel>
                     </Grid>
 
-                    <TextBox Text="{Binding NewTaskNotes}" PlaceholderText="Additional notes or references (optional)" AcceptsReturn="True" Height="60" />
+                    <TextBox Text="{Binding NewTaskNotes}"
+                             FontFamily="{StaticResource ArabicCalligraphyFont}"
+                             PlaceholderText="Additional notes or references in Arabic or English (optional)"
+                             AcceptsReturn="True" Height="60" />
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
                         <Button Content="Cancel" Command="{Binding ToggleAddTaskCommand}" />
@@ -92,10 +103,11 @@
             <!-- SEARCH AND FILTER BAR -->
             <Grid ColumnDefinitions="*,Auto">
                 <TextBox Grid.Column="0" Text="{Binding SearchQuery}"
+                         FontFamily="{StaticResource ArabicCalligraphyFont}"
                          PlaceholderText="Search tasks by title, subject or notes..."
                          CornerRadius="8" Height="34" />
                 <TextBlock Grid.Column="1" Text="{Binding FilteredTasks.Count, StringFormat='{}{0} tasks'}"
-                           FontSize="12" Foreground="#718096" VerticalAlignment="Center" Margin="12,0,0,0" />
+                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0" />
             </Grid>
 
             <!-- TASKS LIST -->
@@ -103,10 +115,16 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="models:TaskItem">
                         <Border Margin="0,4" Padding="14,10"
-                                Background="{DynamicResource SystemAltHighColor}"
+                                Background="{DynamicResource CardBackgroundBrush}"
                                 BorderBrush="{DynamicResource CardBorderBrush}"
                                 BorderThickness="1" CornerRadius="12"
-                                BoxShadow="0 2 6 0 #0A000000">
+                                BoxShadow="0 2 8 0 #0A000000">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <BrushTransition Property="Background" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" Easing="CubicEaseOut" />
+                                </Transitions>
+                            </Border.Transitions>
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                                 <!-- Completion Checkbox -->
                                 <CheckBox Grid.Column="0" IsChecked="{Binding IsCompleted}"
@@ -118,31 +136,35 @@
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <TextBlock Text="{Binding Title}"
-                                                   FontWeight="SemiBold" FontSize="13"
+                                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                                   FontWeight="SemiBold" FontSize="14"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}"
                                                    VerticalAlignment="Center" />
 
-                                        <!-- Subject Badge -->
+                                        <!-- Subject Badge with Kanz-al-Lulu -->
                                         <Border IsVisible="{Binding LinkedSubject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                                 Background="{DynamicResource BronzeSoftBrush}"
                                                 CornerRadius="6" Padding="6,2">
                                             <TextBlock Text="{Binding LinkedSubject}"
-                                                       FontSize="10" FontWeight="Bold"
+                                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                                       FontSize="11" FontWeight="Bold"
                                                        Foreground="{DynamicResource BronzeBrush}" />
                                         </Border>
                                     </StackPanel>
 
                                     <!-- Notes -->
                                     <TextBlock Text="{Binding Notes}"
+                                               FontFamily="{StaticResource ArabicCalligraphyFont}"
                                                IsVisible="{Binding Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                               FontSize="11" Foreground="#718096" TextTrimming="CharacterEllipsis" />
+                                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
 
                                 <!-- Priority and Category -->
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0">
-                                    <Border Background="#15C29447" CornerRadius="6" Padding="6,2">
+                                    <Border Background="{DynamicResource BronzeSoftBrush}" CornerRadius="6" Padding="6,2">
                                         <TextBlock Text="{Binding Priority}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BronzeBrush}" />
                                     </Border>
-                                    <Border Background="#10147A5C" CornerRadius="6" Padding="6,2">
+                                    <Border Background="{DynamicResource EmeraldSoftBrush}" CornerRadius="6" Padding="6,2">
                                         <TextBlock Text="{Binding Category}" FontSize="10" Foreground="{DynamicResource EmeraldBrush}" />
                                     </Border>
                                 </StackPanel>
@@ -161,12 +183,19 @@
 
             <!-- Empty Tasks Notice -->
             <Border IsVisible="{Binding !FilteredTasks.Count}"
-                    Background="#0A000000" CornerRadius="12"
+                    Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1" CornerRadius="12"
                     Padding="40" HorizontalAlignment="Center" Margin="0,20,0,0">
-                <StackPanel HorizontalAlignment="Center" Spacing="6">
-                    <TextBlock Text="✅" FontSize="32" HorizontalAlignment="Center" />
-                    <TextBlock Text="No tasks found matching current filters."
-                               FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center" />
+                <StackPanel HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="📝" FontSize="36" HorizontalAlignment="Center" />
+                    <TextBlock Text="No tasks found matching your filter."
+                               FontWeight="SemiBold" FontSize="15"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Click '+ New Task' above or add tasks directly from any period card."
+                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
+                               HorizontalAlignment="Center" />
                 </StackPanel>
             </Border>
 

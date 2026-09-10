@@ -166,4 +166,57 @@ public class SettingsViewModelTests
             if (File.Exists(tempJson)) File.Delete(tempJson);
         }
     }
+
+    [Fact]
+    public void SettingsViewModel_Credits_HasMustafaRajkotwalaAndAppName()
+    {
+        var secureStorage = new MemorySecureStorage();
+        var timetableRepo = new MemoryTimetableRepo();
+        var changeRepo = new MemoryChangeRepo();
+        var taskRepo = new MemoryTaskRepo();
+        var dummyProvider = new DummyJamiaProvider();
+
+        var timetableService = new TimetableService(timetableRepo, changeRepo, taskRepo, dummyProvider);
+        var migrator = new DummyLegacyMigrator();
+
+        var vm = new SettingsViewModel(secureStorage, timetableService, migrator);
+
+        vm.AppName.Should().Contain("Jadwal");
+        vm.DeveloperName.Should().Be("Mustafa Rajkotwala");
+        vm.AppVersion.Should().Contain("2.0.0");
+    }
+
+    [Fact]
+    public void SettingsViewModel_SetTheme_UpdatesThemeAndState()
+    {
+        var secureStorage = new MemorySecureStorage();
+        var timetableRepo = new MemoryTimetableRepo();
+        var changeRepo = new MemoryChangeRepo();
+        var taskRepo = new MemoryTaskRepo();
+        var dummyProvider = new DummyJamiaProvider();
+
+        var timetableService = new TimetableService(timetableRepo, changeRepo, taskRepo, dummyProvider);
+        var migrator = new DummyLegacyMigrator();
+
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        var themeService = new ThemeService(tempDir);
+
+        var vm = new SettingsViewModel(secureStorage, timetableService, migrator, themeService);
+
+        vm.SetTheme("Dark");
+        vm.SelectedTheme.Should().Be("Dark");
+        vm.IsDarkTheme.Should().BeTrue();
+        vm.IsLightTheme.Should().BeFalse();
+
+        // Check persistence
+        themeService.GetSavedTheme().Should().Be(JadwalThemeMode.Dark);
+
+        vm.SetTheme("Light");
+        vm.SelectedTheme.Should().Be("Light");
+        vm.IsLightTheme.Should().BeTrue();
+        vm.IsDarkTheme.Should().BeFalse();
+        themeService.GetSavedTheme().Should().Be(JadwalThemeMode.Light);
+
+        try { Directory.Delete(tempDir, true); } catch { }
+    }
 }

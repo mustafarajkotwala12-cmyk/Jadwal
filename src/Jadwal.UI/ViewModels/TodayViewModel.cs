@@ -11,6 +11,9 @@ namespace Jadwal.UI.ViewModels;
 
 public class ClassCardItemViewModel : ObservableObject
 {
+    private readonly TaskService? _taskService;
+    private readonly Action? _onTaskChanged;
+
     public PeriodOccurrence Period { get; }
     public ClassLiveStatus Status { get; set; }
 
@@ -21,18 +24,106 @@ public class ClassCardItemViewModel : ObservableObject
         set => SetProperty(ref _isFlipped, value);
     }
 
+    private string _newTaskTitle = string.Empty;
+    public string NewTaskTitle
+    {
+        get => _newTaskTitle;
+        set => SetProperty(ref _newTaskTitle, value);
+    }
+
     public ObservableCollection<TaskItem> Tasks { get; } = new();
 
-    public ClassCardItemViewModel(PeriodOccurrence period, ClassLiveStatus status)
+    public ClassCardItemViewModel(
+        PeriodOccurrence period,
+        ClassLiveStatus status,
+        TaskService? taskService = null,
+        Action? onTaskChanged = null)
     {
         Period = period;
         Status = status;
+        _taskService = taskService;
+        _onTaskChanged = onTaskChanged;
+
+        AddTaskCommand = new AsyncRelayCommand(AddTaskAsync);
+        ToggleTaskCompletionCommand = new AsyncRelayCommand<TaskItem>(ToggleTaskCompletionAsync);
+        DeleteTaskCommand = new AsyncRelayCommand<TaskItem>(DeleteTaskAsync);
     }
 
     public void ToggleFlip()
     {
         IsFlipped = !IsFlipped;
     }
+
+    public IAsyncRelayCommand AddTaskCommand { get; }
+    public IAsyncRelayCommand<TaskItem> ToggleTaskCompletionCommand { get; }
+    public IAsyncRelayCommand<TaskItem> DeleteTaskCommand { get; }
+
+    public async Task AddTaskAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewTaskTitle)) return;
+        var title = NewTaskTitle.Trim();
+        NewTaskTitle = string.Empty;
+
+        if (_taskService != null)
+        {
+            var task = await _taskService.CreateTaskAsync(
+                title: title,
+                linkedSubject: Period.Subject,
+                linkedPeriodId: Period.Id,
+                priority: TaskPriority.Medium,
+                category: TaskCategory.Academic
+            );
+            Tasks.Add(task);
+        }
+        else
+        {
+            var local = new TaskItem
+            {
+                Title = title,
+                LinkedSubject = Period.Subject,
+                LinkedPeriodId = Period.Id,
+                Priority = TaskPriority.Medium,
+                Category = TaskCategory.Academic
+            };
+            Tasks.Add(local);
+        }
+
+        OnPropertyChanged(nameof(TasksCountText));
+        _onTaskChanged?.Invoke();
+    }
+
+    public async Task ToggleTaskCompletionAsync(TaskItem? task)
+    {
+        if (task == null) return;
+        if (_taskService != null)
+        {
+            var updated = await _taskService.ToggleTaskCompletionAsync(task.Id);
+            if (updated != null)
+            {
+                task.IsCompleted = updated.IsCompleted;
+            }
+        }
+        else
+        {
+            task.IsCompleted = !task.IsCompleted;
+        }
+        OnPropertyChanged(nameof(TasksCountText));
+        _onTaskChanged?.Invoke();
+    }
+
+    public async Task DeleteTaskAsync(TaskItem? task)
+    {
+        if (task == null) return;
+        Tasks.Remove(task);
+        if (_taskService != null)
+        {
+            await _taskService.DeleteTaskAsync(task.Id);
+        }
+        OnPropertyChanged(nameof(TasksCountText));
+        _onTaskChanged?.Invoke();
+    }
+
+    public string TasksCountText => Tasks.Count == 1 ? "1 task" : $"{Tasks.Count} tasks";
 
     public string StatusText => Status.Kind switch
     {
@@ -182,8 +273,8 @@ public partial class TodayViewModel : ViewModelBase
         {
             if (item.Kind == ScheduleTimelineItemKind.ClassPeriod && item.Period != null)
             {
-                var cardVm = new ClassCardItemViewModel(item.Period, item.Status);
-                var related = allTasks.Where(t => t.LinkedPeriodId == item.Period.Id || t.LinkedSubject == item.Period.Subject);
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
                 Row1Items.Add(cardVm);
             }
@@ -198,8 +289,8 @@ public partial class TodayViewModel : ViewModelBase
         {
             if (item.Kind == ScheduleTimelineItemKind.ClassPeriod && item.Period != null)
             {
-                var cardVm = new ClassCardItemViewModel(item.Period, item.Status);
-                var related = allTasks.Where(t => t.LinkedPeriodId == item.Period.Id || t.LinkedSubject == item.Period.Subject);
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
                 Row2Items.Add(cardVm);
             }
@@ -210,6 +301,22 @@ public partial class TodayViewModel : ViewModelBase
         }
 
         IsEmptyDay = Row1Items.Count == 0 && Row2Items.Count == 0;
+    }
+
+    private static bool IsTaskRelatedToPeriod(TaskItem task, PeriodOccurrence period)
+    {
+        if (!string.IsNullOrEmpty(task.LinkedPeriodId) && task.LinkedPeriodId == period.Id)
+            return true;
+
+        if (string.IsNullOrWhiteSpace(task.LinkedSubject) || string.IsNullOrWhiteSpace(period.Subject))
+            return false;
+
+        var taskSub = task.LinkedSubject.Trim();
+        var periodSub = period.Subject.Trim();
+
+        return string.Equals(taskSub, periodSub, StringComparison.OrdinalIgnoreCase) ||
+               taskSub.Contains(periodSub, StringComparison.OrdinalIgnoreCase) ||
+               periodSub.Contains(taskSub, StringComparison.OrdinalIgnoreCase);
     }
 
     [RelayCommand]

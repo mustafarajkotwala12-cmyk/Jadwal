@@ -28,6 +28,14 @@ public partial class App : Avalonia.Application
         ConfigureServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
+        var themeService = _serviceProvider.GetRequiredService<ThemeService>();
+        var savedTheme = themeService.GetSavedTheme();
+        RequestedThemeVariant = savedTheme switch
+        {
+            JadwalThemeMode.Dark => Avalonia.Styling.ThemeVariant.Dark,
+            _ => Avalonia.Styling.ThemeVariant.Light
+        };
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
@@ -69,6 +77,7 @@ public partial class App : Avalonia.Application
         services.AddSingleton<ILegacyMigrationService, LegacyDataMigrator>();
 
         // Application Services
+        services.AddSingleton<ThemeService>();
         services.AddSingleton<TaskService>();
         services.AddSingleton<TimetableService>();
         services.AddSingleton<DashboardService>();

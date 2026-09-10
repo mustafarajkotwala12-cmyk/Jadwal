@@ -3,17 +3,17 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:Jadwal.UI.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
              x:Class="Jadwal.UI.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="20" Margin="24" MaxWidth="720" HorizontalAlignment="Left">
+        <StackPanel Spacing="20" Margin="24" MaxWidth="760" HorizontalAlignment="Left">
 
             <!-- HEADER -->
             <StackPanel Spacing="2">
-                <TextBlock Text="Settings &amp; Integration" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
-                <TextBlock Text="Configure portal credentials, sync schedule, and system settings" FontSize="12" Foreground="#718096" />
+                <TextBlock Text="Settings &amp; Preferences" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
+                <TextBlock Text="Customize your Fatimid theme, configure portal credentials, and view system credits" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
             </StackPanel>
 
             <!-- STATUS BANNER -->
@@ -21,20 +21,93 @@
                     Background="{DynamicResource GoldSoftBrush}"
                     BorderBrush="{DynamicResource GoldBrush}"
                     BorderThickness="1" CornerRadius="10" Padding="14,10">
-                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource DeepNavyBrush}" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" />
             </Border>
 
-            <!-- CARD 1: ITS CREDENTIALS & SYNC -->
-            <Border Background="{DynamicResource SystemAltHighColor}"
+            <!-- CARD 1: APPEARANCE & THEME (FATIMID ISLAMIC THEME) -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource CardBorderBrush}"
                     BorderThickness="1.5" CornerRadius="14"
-                    Padding="20" BoxShadow="0 4 12 0 #10000000">
-                <StackPanel Spacing="16">
-                    <TextBlock Text="ITS Portal Credentials" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
-                    <TextBlock Text="Your credentials are encrypted using native OS security (Keychain on macOS, DPAPI on Windows)."
-                               FontSize="11" Foreground="#718096" TextWrapping="Wrap" />
+                    Padding="20" BoxShadow="0 4 14 0 #10000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Appearance &amp; Theme" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
+                    <TextBlock Text="Select your visual experience. Experience the authentic Light Fatimid aesthetic inspired by classical illuminated manuscripts."
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
 
-                    <!-- CREDENTIAL STATUS PILL / BADGE -->
+                    <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                        <!-- Light Fatimid Theme Button -->
+                        <Button Grid.Column="0"
+                                Command="{Binding SetThemeCommand}"
+                                CommandParameter="Light"
+                                Margin="0,0,8,0" Padding="16,14"
+                                CornerRadius="12"
+                                HorizontalAlignment="Stretch"
+                                Background="{Binding IsLightTheme, Converter={x:Static ObjectConverters.IsNull}}"
+                                BorderBrush="{DynamicResource EmeraldBrush}"
+                                BorderThickness="1.5">
+                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                    <TextBlock Text="☀️" FontSize="16" />
+                                    <TextBlock Text="Fatimid Ivory (Light)" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                                <TextBlock Text="Warm manuscript parchment &amp; regal emerald" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                <Border IsVisible="{Binding IsLightTheme}"
+                                        Background="{DynamicResource EmeraldSoftBrush}"
+                                        CornerRadius="6" Padding="6,2" HorizontalAlignment="Center">
+                                    <TextBlock Text="✓ Active Theme" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource EmeraldBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Dark Fatimid Theme Button -->
+                        <Button Grid.Column="1"
+                                Command="{Binding SetThemeCommand}"
+                                CommandParameter="Dark"
+                                Margin="8,0,0,0" Padding="16,14"
+                                CornerRadius="12"
+                                HorizontalAlignment="Stretch"
+                                BorderBrush="{DynamicResource BronzeBrush}"
+                                BorderThickness="1.5">
+                            <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                    <TextBlock Text="🌙" FontSize="16" />
+                                    <TextBlock Text="Fatimid Obsidian (Dark)" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </StackPanel>
+                                <TextBlock Text="Deep emerald slate &amp; luminous gold" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                <Border IsVisible="{Binding IsDarkTheme}"
+                                        Background="{DynamicResource BronzeSoftBrush}"
+                                        CornerRadius="6" Padding="6,2" HorizontalAlignment="Center">
+                                    <TextBlock Text="✓ Active Theme" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- CARD 2: ITS CREDENTIALS & SCHEDULE SYNC -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="20" BoxShadow="0 4 14 0 #10000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <StackPanel Spacing="16">
+                    <TextBlock Text="ITS Portal Credentials &amp; Timetable Sync" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
+                    <TextBlock Text="Credentials are securely stored using native OS hardware encryption (Apple Keychain on macOS, DPAPI on Windows)."
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+
+                    <!-- CREDENTIAL STATUS BADGE -->
                     <Border IsVisible="{Binding IsCredentialsSaved}"
                             Background="#E6F4EA" BorderBrush="#34A853"
                             BorderThickness="1.2" CornerRadius="8" Padding="14,10">
@@ -70,12 +143,12 @@
 
                     <!-- INPUT FIELDS -->
                     <StackPanel Spacing="6">
-                        <TextBlock Text="ITS ID" FontSize="12" FontWeight="SemiBold" />
+                        <TextBlock Text="ITS ID" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                         <TextBox Text="{Binding ItsId}" PlaceholderText="e.g. 30300000" CornerRadius="8" />
                     </StackPanel>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Password" FontSize="12" FontWeight="SemiBold" />
+                        <TextBlock Text="Password" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                         <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="Enter your ITS password" CornerRadius="8" />
                     </StackPanel>
 
@@ -94,21 +167,27 @@
                         <Button Content="📂 Import Timetable (.json / .xlsx)"
                                 Command="{Binding ImportTimetableFileCommand}"
                                 IsEnabled="{Binding !IsBusy}"
-                                Background="{DynamicResource SlateMutedBrush}"
+                                Background="{DynamicResource BronzeSoftBrush}" Foreground="{DynamicResource BronzeBrush}"
                                 Padding="16,9" CornerRadius="8" FontWeight="SemiBold" Margin="0,0,10,10" />
                     </WrapPanel>
                 </StackPanel>
             </Border>
 
-            <!-- CARD 2: LEGACY DATA MIGRATION -->
-            <Border Background="{DynamicResource SystemAltHighColor}"
+            <!-- CARD 3: LEGACY DATA MIGRATION -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource CardBorderBrush}"
                     BorderThickness="1.5" CornerRadius="14"
-                    Padding="20" BoxShadow="0 4 12 0 #10000000">
+                    Padding="20" BoxShadow="0 4 14 0 #10000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
                 <StackPanel Spacing="14">
                     <TextBlock Text="Legacy Data Migration" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
                     <TextBlock Text="Import tasks, timetable snapshots, and changes from previous Swift / Python versions of JameaHelper / Jadwal. Automated backups are created before migration."
-                               FontSize="11" Foreground="#718096" TextWrapping="Wrap" />
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
 
                     <Button Content="📦 Import from Legacy Stores"
                             Command="{Binding RunLegacyMigrationCommand}"
@@ -122,12 +201,60 @@
                 </StackPanel>
             </Border>
 
-            <!-- CARD 3: APP INFO -->
-            <Border Background="#08000000" CornerRadius="14" Padding="16">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Jadwal (جدول) — Academic Timetable &amp; Schedule Companion" FontWeight="SemiBold" FontSize="12" />
-                    <TextBlock Text="Version 2.0.0 (.NET 10 LTS • Avalonia UI 12 • Cross-Platform Engine)" FontSize="11" Foreground="#718096" />
-                </StackPanel>
+            <!-- CARD 4: CREDITS & ABOUT SECTION -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="22" BoxShadow="0 4 14 0 #10000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <Grid ColumnDefinitions="Auto,*">
+                    <!-- Ornamental Islamic Star Motif Badge -->
+                    <Border Grid.Column="0" Width="64" Height="64"
+                            CornerRadius="16"
+                            Background="{DynamicResource BannerGradientBrush}"
+                            VerticalAlignment="Center" Margin="0,0,18,0">
+                        <TextBlock Text="📖" FontSize="28"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- Details -->
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="{Binding AppName}"
+                                       FontSize="18" FontWeight="Bold"
+                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <Border Background="{DynamicResource BronzeSoftBrush}"
+                                    CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding AppVersion, StringFormat='Version {0}'}"
+                                           FontSize="10" FontWeight="Bold"
+                                           Foreground="{DynamicResource BronzeBrush}" />
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="{Binding AppSubtitle}"
+                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                        <!-- Developer Credit -->
+                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,6,0,0">
+                            <TextBlock Text="Designed &amp; Developed by:"
+                                       FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                            <TextBlock Text="{Binding DeveloperName}"
+                                       FontSize="12" FontWeight="Bold"
+                                       Foreground="{DynamicResource EmeraldBrush}" />
+                        </StackPanel>
+
+                        <!-- Platform info -->
+                        <TextBlock Text="Engine: .NET 10 LTS • Avalonia UI • Cross-Platform Native Architecture (macOS &amp; Windows)"
+                                   FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
         </StackPanel>

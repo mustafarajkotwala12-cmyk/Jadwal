@@ -180,4 +180,78 @@ public class TodayViewModelTests
         vm.CurrentTimeString.Should().NotBe("Old Time");
         vm.CurrentTimeString.Should().NotBeEmpty();
     }
+
+    [Fact]
+    public async Task ClassCardItemViewModel_AddTaskAsync_AddsTaskToServiceAndCard()
+    {
+        var taskRepo = new MemoryTaskRepo();
+        var timeProvider = new TestTimeProvider();
+        var taskService = new TaskService(taskRepo, timeProvider);
+
+        var period = new PeriodOccurrence(
+            id: "p1",
+            day: JadwalDayOfWeek.Monday,
+            dateString: "2026-09-14",
+            periodName: "Period 1",
+            startTime: "08:00",
+            endTime: "08:45",
+            subject: "الادب الفاطمي",
+            details: "Room 101"
+        );
+        var status = new ClassLiveStatus(ClassStatusKind.Upcoming, 30);
+
+        var card = new ClassCardItemViewModel(period, status, taskService);
+        card.NewTaskTitle = "تحضير القصيدة";
+
+        await card.AddTaskAsync();
+
+        card.Tasks.Should().HaveCount(1);
+        card.Tasks[0].Title.Should().Be("تحضير القصيدة");
+        card.Tasks[0].LinkedSubject.Should().Be("الادب الفاطمي");
+        card.TasksCountText.Should().Be("1 task");
+
+        // Verify in repository
+        var allTasks = await taskService.GetAllTasksAsync();
+        allTasks.Should().HaveCount(1);
+        allTasks[0].Title.Should().Be("تحضير القصيدة");
+    }
+
+    [Fact]
+    public async Task ClassCardItemViewModel_ToggleAndDeletion_WorksCorrectly()
+    {
+        var taskRepo = new MemoryTaskRepo();
+        var timeProvider = new TestTimeProvider();
+        var taskService = new TaskService(taskRepo, timeProvider);
+
+        var period = new PeriodOccurrence(
+            id: "p2",
+            day: JadwalDayOfWeek.Monday,
+            dateString: "2026-09-14",
+            periodName: "Period 2",
+            startTime: "09:00",
+            endTime: "09:45",
+            subject: "كتاب الينبوع",
+            details: "Room 102"
+        );
+        var status = new ClassLiveStatus(ClassStatusKind.Upcoming, 60);
+
+        var card = new ClassCardItemViewModel(period, status, taskService);
+        card.NewTaskTitle = "مراجعة الفصل الأول";
+        await card.AddTaskAsync();
+
+        var task = card.Tasks[0];
+        task.IsCompleted.Should().BeFalse();
+
+        // Toggle completion
+        await card.ToggleTaskCompletionAsync(task);
+        task.IsCompleted.Should().BeTrue();
+
+        // Delete task
+        await card.DeleteTaskAsync(task);
+        card.Tasks.Should().BeEmpty();
+        card.TasksCountText.Should().Be("0 tasks");
+
+        var repoTasks = await taskService.GetAllTasksAsync();
+        repoTasks.Should().BeEmpty();
+    }
 }

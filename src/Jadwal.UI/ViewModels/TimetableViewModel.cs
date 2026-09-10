@@ -38,14 +38,14 @@ public partial class TimetableViewModel : ViewModelBase
     [ObservableProperty]
     private string _searchText = string.Empty;
 
-    public ObservableCollection<JadwalDayOfWeek> AvailableDays { get; } = new()
+    public ObservableCollection<DayTabViewModel> DayTabs { get; } = new()
     {
-        JadwalDayOfWeek.Monday,
-        JadwalDayOfWeek.Tuesday,
-        JadwalDayOfWeek.Wednesday,
-        JadwalDayOfWeek.Thursday,
-        JadwalDayOfWeek.Friday,
-        JadwalDayOfWeek.Saturday
+        new(JadwalDayOfWeek.Monday),
+        new(JadwalDayOfWeek.Tuesday),
+        new(JadwalDayOfWeek.Wednesday),
+        new(JadwalDayOfWeek.Thursday),
+        new(JadwalDayOfWeek.Friday),
+        new(JadwalDayOfWeek.Saturday)
     };
 
     public ObservableCollection<object> Row1Items { get; } = new();
@@ -90,20 +90,29 @@ public partial class TimetableViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public async Task SelectDayTabAsync(DayTabViewModel tab)
+    {
+        if (tab == null) return;
+        SelectedDay = tab.Day;
+        await LoadDayScheduleAsync();
+    }
+
+    [RelayCommand]
     public async Task LoadDayScheduleAsync()
     {
-        var snapshot = await _timetableService.GetLatestTimetableAsync();
-        var allTasks = await _taskService.GetAllTasksAsync();
-        var rule = DayScheduleRule.RuleFor(SelectedDay);
+        Row1Items.Clear();
+        Row2Items.Clear();
 
-        DayTitle = SelectedDay.ToString();
+        DayTitle = SelectedDay.ToEnglishString();
         DayArabicTitle = SelectedDay.ToArabicString();
+
+        var rule = DayScheduleRule.RuleFor(SelectedDay);
         DaySubtitle = rule.DaySubtitle;
         Row1Title = rule.Row1Title;
         Row2Title = rule.Row2Title;
 
-        Row1Items.Clear();
-        Row2Items.Clear();
+        var snapshot = await _timetableService.GetLatestTimetableAsync();
+        var allTasks = await _taskService.GetAllTasksAsync();
 
         if (snapshot == null)
         {
@@ -124,8 +133,8 @@ public partial class TimetableViewModel : ViewModelBase
                 if (!string.IsNullOrEmpty(query) && !MatchesSearch(item.Period, query))
                     continue;
 
-                var cardVm = new ClassCardItemViewModel(item.Period, item.Status);
-                var related = allTasks.Where(t => t.LinkedPeriodId == item.Period.Id || t.LinkedSubject == item.Period.Subject);
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
                 Row1Items.Add(cardVm);
             }
@@ -143,8 +152,8 @@ public partial class TimetableViewModel : ViewModelBase
                 if (!string.IsNullOrEmpty(query) && !MatchesSearch(item.Period, query))
                     continue;
 
-                var cardVm = new ClassCardItemViewModel(item.Period, item.Status);
-                var related = allTasks.Where(t => t.LinkedPeriodId == item.Period.Id || t.LinkedSubject == item.Period.Subject);
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
                 foreach (var t in related) cardVm.Tasks.Add(t);
                 Row2Items.Add(cardVm);
             }
@@ -158,6 +167,22 @@ public partial class TimetableViewModel : ViewModelBase
         IsEmptyDay = Row1Items.Count == 0 && Row2Items.Count == 0;
     }
 
+    private static bool IsTaskRelatedToPeriod(TaskItem task, PeriodOccurrence period)
+    {
+        if (!string.IsNullOrEmpty(task.LinkedPeriodId) && task.LinkedPeriodId == period.Id)
+            return true;
+
+        if (string.IsNullOrWhiteSpace(task.LinkedSubject) || string.IsNullOrWhiteSpace(period.Subject))
+            return false;
+
+        var taskSub = task.LinkedSubject.Trim();
+        var periodSub = period.Subject.Trim();
+
+        return string.Equals(taskSub, periodSub, StringComparison.OrdinalIgnoreCase) ||
+               taskSub.Contains(periodSub, StringComparison.OrdinalIgnoreCase) ||
+               periodSub.Contains(taskSub, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static bool MatchesSearch(PeriodOccurrence period, string query)
     {
         return period.Subject.Contains(query, StringComparison.OrdinalIgnoreCase) ||
@@ -165,3 +190,18 @@ public partial class TimetableViewModel : ViewModelBase
                period.PeriodName.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 }
+
+public class DayTabViewModel
+{
+    public JadwalDayOfWeek Day { get; }
+    public string ArabicName { get; }
+    public string EnglishName { get; }
+
+    public DayTabViewModel(JadwalDayOfWeek day)
+    {
+        Day = day;
+        ArabicName = day.ToArabicString().Replace("يوم ", "");
+        EnglishName = day.ToEnglishString();
+    }
+}
+
