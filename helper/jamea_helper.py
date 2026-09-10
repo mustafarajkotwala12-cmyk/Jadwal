@@ -5,6 +5,7 @@ import json
 import os
 import re
 import stat
+import time
 from pathlib import Path
 from typing import Any
 import openpyxl
@@ -29,14 +30,47 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 TOKEN_FILE = DATA_DIR / "jamea_token.json"
 BROWSER_PROFILE = DATA_DIR / "browser-profile"
 
+
+def is_jwt_valid(token: str | None) -> bool:
+    """
+    Check if a JWT is well-formed and unexpired.
+    Returns False if the token is None, malformed, or expired.
+    """
+    if not token or not isinstance(token, str):
+        return False
+    parts = token.split(".")
+    if len(parts) != 3:
+        return False
+    try:
+        payload = parts[1]
+        payload += "=" * (-len(payload) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(payload))
+        exp = claims.get("exp")
+        if exp is not None and isinstance(exp, (int, float)):
+            # Give a 60-second safety cushion
+            if exp <= (time.time() + 60):
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def decode_jwt_claims(token: str) -> dict:
+    """
+    Decode JWT claims payload directly in Python.
+    """
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("Invalid JWT format.")
+    payload = parts[1]
+    payload += "=" * (-len(payload) % 4)
+    return json.loads(base64.urlsafe_b64decode(payload))
+
+
 def save_token(token: str) -> None:
     """
     Save the Jamea JWT locally for reuse between runs.
-
-    This is suitable for a prototype. For the final macOS app,
-    store the token in Keychain instead of a normal file.
     """
-
     with open(TOKEN_FILE, "w", encoding="utf-8") as f:
         json.dump(
             {
@@ -51,68 +85,92 @@ def save_token(token: str) -> None:
 
 def load_token() -> str | None:
     """
-    Load a previously saved Jamea JWT.
+    Load a previously saved Jamea JWT if it exists and has not expired.
+    Deletes any expired token files encountered.
     """
+    candidate_paths = [
+        TOKEN_FILE,
+        Path.home() / "Library" / "Application Support" / "Jadwal" / "data" / "jamea_token.json",
+        Path.home() / "Library" / "Application Support" / "SWIFT" / "data" / "jamea_token.json",
+    ]
 
-    if not TOKEN_FILE.exists():
-        return None
+    for path in candidate_paths:
+        if not path.exists():
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
 
-    try:
-        with open(TOKEN_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        token = data.get("access_token")
-
-        if isinstance(token, str) and token:
-            return token
-
-    except (OSError, json.JSONDecodeError):
-        pass
+            token = data.get("access_token")
+            if isinstance(token, str) and token:
+                if is_jwt_valid(token):
+                    return token
+                else:
+                    print(f"Expired session token found in {path}. Removing...")
+                    try:
+                        path.unlink()
+                    except OSError:
+                        pass
+        except (OSError, json.JSONDecodeError):
+            pass
 
     return None
 
 
 def delete_token() -> None:
     """
-    Delete the saved Jamea JWT when expired or invalid.
+    Delete saved Jamea JWTs across all candidate locations.
     """
-    if TOKEN_FILE.exists():
-        try:
-            TOKEN_FILE.unlink()
-        except OSError:
-            pass
+    candidate_paths = [
+        TOKEN_FILE,
+        Path.home() / "Library" / "Application Support" / "Jadwal" / "data" / "jamea_token.json",
+        Path.home() / "Library" / "Application Support" / "SWIFT" / "data" / "jamea_token.json",
+    ]
+    for candidate in candidate_paths:
+        if candidate.exists():
+            try:
+                candidate.unlink()
+            except OSError:
+                pass
+
+
 async def get_token(page) -> str:
     """
-    Read the Jamea JWT inside the already-authenticated browser page.
-
-    The token is never printed or saved to disk.
+    Read the Jamea JWT from browser sessionStorage or localStorage.
     """
     token = await page.evaluate("""
-        () => sessionStorage.getItem("webauth_token_capture")
+        () => {
+            return sessionStorage.getItem("webauth_token_capture")
+                || sessionStorage.getItem("WEBAUTH_TOKEN_CAPTURE")
+                || localStorage.getItem("access_token")
+                || sessionStorage.getItem("access_token");
+        }
     """)
 
-    if not token:
+    if not token or not is_jwt_valid(token):
         raise RuntimeError(
-            "Jamea authentication token was not found. "
+            "Valid Jamea authentication token was not found. "
             "Please log in through the browser first."
         )
 
     return token
 
 
-async def api_fetch(page, url: str, body: dict) -> Any:
+async def api_fetch(page, url: str, body: dict, token: str | None = None) -> Any:
     """
     Make an authenticated API request from inside the Jamea page context.
-
-    This keeps authentication inside the browser session.
+    Uses the provided token or reads it from page storage.
     """
     result = await page.evaluate(
         """
-        async ({ url, body }) => {
-            const token =
-                sessionStorage.getItem("webauth_token_capture");
+        async ({ url, body, token }) => {
+            const authToken = token
+                || sessionStorage.getItem("webauth_token_capture")
+                || sessionStorage.getItem("WEBAUTH_TOKEN_CAPTURE")
+                || localStorage.getItem("access_token")
+                || sessionStorage.getItem("access_token");
 
-            if (!token) {
+            if (!authToken) {
                 throw new Error("Authentication token not found.");
             }
 
@@ -121,7 +179,7 @@ async def api_fetch(page, url: str, body: dict) -> Any:
                 headers: {
                     "Accept": "application/json, text/plain, */*",
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
+                    "Authorization": `Bearer ${authToken}`,
                     "X-Menu-Id": "1372"
                 },
                 body: JSON.stringify(body)
@@ -130,7 +188,6 @@ async def api_fetch(page, url: str, body: dict) -> Any:
             const text = await response.text();
 
             let data;
-
             try {
                 data = JSON.parse(text);
             } catch {
@@ -144,7 +201,7 @@ async def api_fetch(page, url: str, body: dict) -> Any:
             };
         }
         """,
-        {"url": url, "body": body},
+        {"url": url, "body": body, "token": token},
     )
 
     if not result["ok"]:
@@ -159,53 +216,18 @@ async def api_fetch(page, url: str, body: dict) -> Any:
     return result["data"]
 
 
-async def get_user_info_from_token(page) -> dict:
+async def get_user_info_from_token(page, token: str | None = None) -> dict:
     """
-    Decode JWT claims inside the browser.
-
-    This is only used to discover the student's own class,
-    branch and academic year.
+    Decode JWT claims to discover the student's class, branch, and academic year.
     """
-    result = await page.evaluate("""
-        () => {
-            const token =
-                sessionStorage.getItem("webauth_token_capture");
+    if token and is_jwt_valid(token):
+        return decode_jwt_claims(token)
 
-            if (!token) {
-                throw new Error("JWT not found.");
-            }
-
-            const parts = token.split(".");
-
-            if (parts.length !== 3) {
-                throw new Error("Unexpected JWT format.");
-            }
-
-            const payload = parts[1];
-
-            const normalized =
-                payload.replace(/-/g, "+").replace(/_/g, "/");
-
-            const json = decodeURIComponent(
-                atob(normalized)
-                    .split("")
-                    .map(
-                        c =>
-                            "%" +
-                            ("00" + c.charCodeAt(0).toString(16))
-                                .slice(-2)
-                    )
-                    .join("")
-            );
-
-            return JSON.parse(json);
-        }
-    """)
-
-    return result
+    tok = await get_token(page)
+    return decode_jwt_claims(tok)
 
 
-async def get_current_week(page, year_ar: int, branch_id: str):
+async def get_current_week(page, year_ar: int, branch_id: str, token: str | None = None):
     url = (
         f"{API_BASE}/api/JadwalPage/"
         "SelectWeekDDList_JadwalReports"
@@ -218,7 +240,8 @@ async def get_current_week(page, year_ar: int, branch_id: str):
             "yearAR": year_ar,
             "branchID": branch_id,
             "teacherID": "%"
-        }
+        },
+        token=token
     )
 
     weeks = data.get("data", [])
@@ -234,7 +257,7 @@ async def get_current_week(page, year_ar: int, branch_id: str):
     return current_week
 
 
-async def generate_excel(page, report_params: dict) -> Path:
+async def generate_excel(page, report_params: dict, token: str | None = None) -> Path:
     url = (
         f"{API_BASE}/api/JadwalReport/"
         "JadwalTimeTableReportExcel"
@@ -243,7 +266,8 @@ async def generate_excel(page, report_params: dict) -> Path:
     response = await api_fetch(
         page,
         url,
-        report_params
+        report_params,
+        token=token
     )
 
     if not response.get("succeeded"):
@@ -287,18 +311,21 @@ async def generate_excel(page, report_params: dict) -> Path:
     # Download directly through the authenticated page context.
     result = await page.evaluate(
         """
-        async (url) => {
-            const token =
-                sessionStorage.getItem("webauth_token_capture");
+        async ({ url, token }) => {
+            const authToken = token
+                || sessionStorage.getItem("webauth_token_capture")
+                || sessionStorage.getItem("WEBAUTH_TOKEN_CAPTURE")
+                || localStorage.getItem("access_token")
+                || sessionStorage.getItem("access_token");
 
-            if (!token) {
+            if (!authToken) {
                 throw new Error("Authentication token not found.");
             }
 
             const response = await fetch(url, {
                 method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${token}`
+                    "Authorization": `Bearer ${authToken}`
                 }
             });
 
@@ -334,7 +361,7 @@ async def generate_excel(page, report_params: dict) -> Path:
             return btoa(binary);
         }
         """,
-        download_url
+        {"url": download_url, "token": token}
     )
 
     file_bytes = base64.b64decode(result)
@@ -656,61 +683,50 @@ async def main():
         print()
 
         cached_token = load_token()
-
-        if cached_token:
-            print("Found saved Jamea authentication.")
-            print("Testing saved session...")
-        else:
-            print("No saved authentication found.")
-            print("Please log in through ITS.")
+        active_token = None
+        claims = None
+        current_week = None
+        authenticated = False
 
         context = await p.chromium.launch_persistent_context(
             user_data_dir=str(BROWSER_PROFILE),
             headless=False,
         )
 
-        if cached_token:
-            token_json = json.dumps(cached_token)
-
-            await context.add_init_script(
-                script=f"""
-                (() => {{
-                    try {{
-                        const token = {token_json};
-
-                        sessionStorage.setItem(
-                            "webauth_token_capture",
-                            token
-                        );
-                    }} catch (error) {{
-                        console.error(
-                            "Failed to restore Jamea authentication token:",
-                            error
-                        );
-                    }}
-                }})();
-                """
-            )
-
         page = context.pages[0] if context.pages else await context.new_page()
 
-        await page.goto(JAMEA_URL)
+        # Listen for any outgoing requests or responses carrying a valid Bearer token
+        captured_tokens: list[str] = []
 
-        authenticated = False
-        claims = None
-        current_week = None
+        def on_response(response):
+            try:
+                auth = response.request.headers.get("authorization", "")
+                if auth.startswith("Bearer "):
+                    cand = auth[7:].strip()
+                    if is_jwt_valid(cand):
+                        captured_tokens.append(cand)
+            except Exception:
+                pass
+
+        page.on("response", on_response)
 
         if cached_token:
+            print("Found saved Jamea authentication.")
+            print("Testing saved session...")
             try:
-                claims = await get_user_info_from_token(page)
+                claims = decode_jwt_claims(cached_token)
                 branch_id = str(claims["branchID"])
                 year_ar = int(claims["yearAR"])
+
+                await page.goto(JAMEA_URL, wait_until="domcontentloaded")
 
                 current_week = await get_current_week(
                     page,
                     year_ar,
-                    branch_id
+                    branch_id,
+                    token=cached_token
                 )
+                active_token = cached_token
                 authenticated = True
                 print("Saved session is valid!")
             except Exception as e:
@@ -719,14 +735,26 @@ async def main():
                 else:
                     print(f"Saved session expired or invalid: {e}")
                 delete_token()
-                try:
-                    await page.evaluate("() => sessionStorage.removeItem('webauth_token_capture')")
-                    await page.goto(JAMEA_URL)
-                except Exception:
-                    pass
-                print("Please log in through ITS.")
+                cached_token = None
+                authenticated = False
 
         if not authenticated:
+            delete_token()
+            try:
+                await page.goto(JAMEA_URL, wait_until="domcontentloaded")
+                # Clear any expired tokens from the page to allow clean ITS login
+                await page.evaluate("""
+                    () => {
+                        sessionStorage.removeItem("webauth_token_capture");
+                        sessionStorage.removeItem("WEBAUTH_TOKEN_CAPTURE");
+                        sessionStorage.removeItem("access_token");
+                        localStorage.removeItem("access_token");
+                        localStorage.removeItem("refresh_token");
+                    }
+                """)
+            except Exception:
+                pass
+
             print()
             print("A browser window has been opened.")
             print("Please log in through ITS in the browser window.")
@@ -734,15 +762,31 @@ async def main():
             print()
 
             token = None
-            for _ in range(120):  # Wait up to 120 seconds for user to log in
+            for _ in range(180):  # Wait up to 180 seconds for user to log in
                 await asyncio.sleep(1)
                 try:
                     if page.is_closed():
                         raise RuntimeError("Browser window was closed before login completed.")
+
+                    # Check for network captured tokens
+                    while captured_tokens:
+                        cand = captured_tokens.pop(0)
+                        if is_jwt_valid(cand):
+                            token = cand
+                            break
+                    if token:
+                        break
+
+                    # Check sessionStorage and localStorage
                     raw_token = await page.evaluate("""
-                        () => sessionStorage.getItem("webauth_token_capture")
+                        () => {
+                            return sessionStorage.getItem("webauth_token_capture")
+                                || sessionStorage.getItem("WEBAUTH_TOKEN_CAPTURE")
+                                || localStorage.getItem("access_token")
+                                || sessionStorage.getItem("access_token");
+                        }
                     """)
-                    if raw_token and isinstance(raw_token, str) and len(raw_token) > 20:
+                    if raw_token and isinstance(raw_token, str) and is_jwt_valid(raw_token):
                         token = raw_token
                         break
                 except Exception as e:
@@ -754,17 +798,18 @@ async def main():
                 raise RuntimeError("Login timed out. Please click Sync again and log in.")
 
             save_token(token)
+            active_token = token
             print("Jamea authentication detected.")
 
-            claims = await get_user_info_from_token(page)
-
+            claims = decode_jwt_claims(active_token)
             branch_id = str(claims["branchID"])
             year_ar = int(claims["yearAR"])
 
             current_week = await get_current_week(
                 page,
                 year_ar,
-                branch_id
+                branch_id,
+                token=active_token
             )
 
         branch_id = str(claims["branchID"])
@@ -800,7 +845,8 @@ async def main():
 
         excel_file = await generate_excel(
             page,
-            report_params
+            report_params,
+            token=active_token
         )
 
         print()

@@ -150,7 +150,7 @@ public final class JameaHelperBridge: Sendable {
         // If running inside app bundle resources, route data directory to Application Support
         if (workingDirectory as NSString).contains(".app/Contents/Resources") {
             let appSupportDataDir = FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Application Support/SWIFT/data")
+                .appendingPathComponent("Library/Application Support/Jadwal/data")
             try? FileManager.default.createDirectory(at: appSupportDataDir, withIntermediateDirectories: true)
             environment["JAMEA_DATA_DIR"] = appSupportDataDir.path
         }
