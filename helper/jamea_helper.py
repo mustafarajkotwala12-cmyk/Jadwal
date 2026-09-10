@@ -5,6 +5,7 @@ import json
 import os
 import re
 import stat
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -682,7 +683,15 @@ async def main():
         print("======================================")
         print()
 
-        cached_token = load_token()
+        force_login = "--login" in sys.argv or "--force-login" in sys.argv or os.environ.get("FORCE_LOGIN") == "1"
+
+        if force_login:
+            print("ITS login requested. Resetting saved credentials...")
+            delete_token()
+            cached_token = None
+        else:
+            cached_token = load_token()
+
         active_token = None
         claims = None
         current_week = None
@@ -741,17 +750,28 @@ async def main():
         if not authenticated:
             delete_token()
             try:
+                await context.clear_cookies()
+            except Exception:
+                pass
+
+            try:
                 await page.goto(JAMEA_URL, wait_until="domcontentloaded")
                 # Clear any expired tokens from the page to allow clean ITS login
                 await page.evaluate("""
                     () => {
-                        sessionStorage.removeItem("webauth_token_capture");
-                        sessionStorage.removeItem("WEBAUTH_TOKEN_CAPTURE");
-                        sessionStorage.removeItem("access_token");
-                        localStorage.removeItem("access_token");
-                        localStorage.removeItem("refresh_token");
+                        try {
+                            sessionStorage.clear();
+                            localStorage.clear();
+                        } catch (e) {}
                     }
                 """)
+                # Reload so Jamea redirects straight to ITS login page
+                await page.goto(JAMEA_URL, wait_until="domcontentloaded")
+            except Exception:
+                pass
+
+            try:
+                await page.bring_to_front()
             except Exception:
                 pass
 
@@ -877,4 +897,12 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        err = str(e)
+        if "closed" in err.lower() or "target" in err.lower():
+            print("\nSync cancelled: The browser window was closed before login/sync completed.")
+            print("Please keep the browser window open while authenticating.")
+            sys.exit(1)
+        raise

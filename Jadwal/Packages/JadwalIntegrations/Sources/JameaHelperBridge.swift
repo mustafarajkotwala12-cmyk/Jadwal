@@ -128,14 +128,14 @@ public final class JameaHelperBridge: Sendable {
     }
 
     /// Runs python3 helper/jamea_helper.py and returns the updated timetable snapshot.
-    public func executeHelperAndReload() async throws -> TimetableSnapshot {
+    public func executeHelperAndReload(forceLogin: Bool = false) async throws -> TimetableSnapshot {
         guard FileManager.default.fileExists(atPath: helperScriptPath) else {
             throw HelperBridgeError.scriptNotFound(helperScriptPath)
         }
 
         let process = Process()
         process.executableURL = URL(fileURLWithPath: pythonExecutable)
-        process.arguments = [helperScriptPath]
+        process.arguments = forceLogin ? [helperScriptPath, "--login"] : [helperScriptPath]
         process.currentDirectoryURL = URL(fileURLWithPath: workingDirectory)
 
         var environment = ProcessInfo.processInfo.environment

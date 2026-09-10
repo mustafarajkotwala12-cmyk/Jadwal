@@ -69,13 +69,13 @@ public final class AppEnvironment: ObservableObject {
         }
     }
 
-    public func refreshTimetable() async {
+    public func refreshTimetable(forceLogin: Bool = false) async {
         isSyncing = true
-        statusMessage = "Syncing timetable with Jamea Helper..."
+        statusMessage = forceLogin ? "Opening ITS login in browser..." : "Syncing timetable with Jamea Helper..."
         errorMessage = nil
 
         do {
-            let updatedRaw = try await helperBridge.executeHelperAndReload()
+            let updatedRaw = try await helperBridge.executeHelperAndReload(forceLogin: forceLogin)
             
             // Diff against old snapshot
             let newChanges = diffEngine.diff(oldSnapshot: self.timetableSnapshot, newSnapshot: updatedRaw)

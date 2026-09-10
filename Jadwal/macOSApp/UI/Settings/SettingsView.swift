@@ -31,17 +31,33 @@ public struct SettingsView: View {
                     LabeledContent("Total Unique Subjects", value: "\(snapshot.uniqueSubjects.count)")
                 }
 
-                Button(action: {
-                    Task { await env.refreshTimetable() }
-                }) {
-                    if env.isSyncing {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Label("Refresh Timetable via Helper", systemImage: "arrow.triangle.2.circlepath")
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            Task { await env.refreshTimetable(forceLogin: true) }
+                        }) {
+                            if env.isSyncing {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            } else {
+                                Label("Log In with ITS", systemImage: "person.badge.key")
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(env.isSyncing)
+
+                        Button(action: {
+                            Task { await env.refreshTimetable(forceLogin: false) }
+                        }) {
+                            Label("Quick Sync", systemImage: "arrow.triangle.2.circlepath")
+                        }
+                        .disabled(env.isSyncing)
                     }
+
+                    Text("Click **Log In with ITS** to open the browser, enter your ITS credentials, and link your schedule. Use **Quick Sync** if already logged in.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .disabled(env.isSyncing)
 
                 if let status = env.statusMessage {
                     Text(status)
