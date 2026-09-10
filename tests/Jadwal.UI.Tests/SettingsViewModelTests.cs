@@ -183,7 +183,7 @@ public class SettingsViewModelTests
 
         vm.AppName.Should().Contain("Jadwal");
         vm.DeveloperName.Should().Be("Mustafa Rajkotwala");
-        vm.AppVersion.Should().Contain("2.0.0");
+        vm.AppVersion.Should().Contain("3.0.0");
     }
 
     [Fact]
