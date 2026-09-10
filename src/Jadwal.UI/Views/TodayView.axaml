@@ -74,56 +74,75 @@
                 </Grid>
             </Border>
 
-            <!-- ROW 1: MORNING SESSIONS (FREEFORM HORIZONTAL ROW 1) -->
-            <StackPanel Spacing="10">
-                <TextBlock Text="{Binding Row1Title}"
-                           FontSize="15" FontWeight="Bold"
-                           Foreground="{DynamicResource BronzeBrush}"
-                           Margin="4,0,0,0" />
-
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Row1Items}">
+            <!-- 3-ROW TIMETABLE LAYOUT -->
+            <StackPanel Spacing="6" IsVisible="{Binding !IsEmptyDay}">
+                <!-- ROW 1: 3 SUBJECT CARDS + SMALL PHYSICAL EDUCATION SLOT (HIDDEN ON FRIDAY) -->
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- Academic Subject Cards -->
+                    <ItemsControl Grid.Column="0" ItemsSource="{Binding Row1Cards}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="2" />
+                                <UniformGrid Rows="1" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
-                        <ItemsControl.DataTemplates>
+                        <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:ClassCardItemViewModel">
                                 <ctrl:ClassCardControl />
                             </DataTemplate>
-                            <DataTemplate DataType="vm:BreakPillItemViewModel">
-                                <ctrl:VerticalBreakPillControl />
-                            </DataTemplate>
-                        </ItemsControl.DataTemplates>
+                        </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </ScrollViewer>
-            </StackPanel>
 
-            <!-- ROW 2: AFTERNOON SESSIONS (FREEFORM HORIZONTAL ROW 2) -->
-            <StackPanel Spacing="10" IsVisible="{Binding !IsEmptyDay}">
-                <TextBlock Text="{Binding Row2Title}"
-                           FontSize="15" FontWeight="Bold"
-                           Foreground="{DynamicResource BronzeBrush}"
-                           Margin="4,0,0,0" />
-
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{Binding Row2Items}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <StackPanel Orientation="Horizontal" Spacing="2" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.DataTemplates>
+                    <!-- Small Physical Education Slot (Shown Mon-Thu, Removed on Friday) -->
+                    <ContentControl Grid.Column="1"
+                                    IsVisible="{Binding HasPhysicalEducation}"
+                                    Content="{Binding PhysicalEducationCard}"
+                                    Width="155">
+                        <ContentControl.ContentTemplate>
                             <DataTemplate DataType="vm:ClassCardItemViewModel">
-                                <ctrl:ClassCardControl />
+                                <ctrl:PhysicalEducationCardControl />
                             </DataTemplate>
-                            <DataTemplate DataType="vm:BreakPillItemViewModel">
-                                <ctrl:VerticalBreakPillControl />
-                            </DataTemplate>
-                        </ItemsControl.DataTemplates>
-                    </ItemsControl>
-                </ScrollViewer>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </Grid>
+
+                <!-- BREAK 1: HORIZONTAL FULL-WIDTH STRIP (RECESS BREAK) -->
+                <Panel IsVisible="{Binding HasBreak1}">
+                    <ctrl:HorizontalBreakBarControl DataContext="{Binding Break1}" />
+                </Panel>
+
+                <!-- ROW 2: 3 SUBJECT CARDS -->
+                <ItemsControl ItemsSource="{Binding Row2Cards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:ClassCardItemViewModel">
+                            <ctrl:ClassCardControl />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- BREAK 2: HORIZONTAL FULL-WIDTH STRIP (LUNCH & NAMAZ BREAK) -->
+                <Panel IsVisible="{Binding HasBreak2}">
+                    <ctrl:HorizontalBreakBarControl DataContext="{Binding Break2}" />
+                </Panel>
+
+                <!-- ROW 3: 3 SUBJECT CARDS -->
+                <ItemsControl ItemsSource="{Binding Row3Cards}"
+                              IsVisible="{Binding HasRow3}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:ClassCardItemViewModel">
+                            <ctrl:ClassCardControl />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
 
             <!-- EMPTY STATE NOTICE -->

@@ -31,5 +31,6 @@ public record TodayClassTimetableDto(
     IReadOnlyList<ScheduleTimelineItem> Row2Items,
     IReadOnlyList<TimetableChangeRecord> ActiveChanges,
     PeriodOccurrence? ActivePeriod,
-    PeriodOccurrence? NextPeriod
+    PeriodOccurrence? NextPeriod,
+    ThreeRowDaySchedule? ThreeRowSchedule = null
 );

@@ -230,4 +230,161 @@ public static class ScheduleTimelineBuilder
         var mid = (items.Count + 1) / 2;
         return (items.Take(mid).ToList().AsReadOnly(), items.Skip(mid).ToList().AsReadOnly());
     }
+
+    public static ThreeRowDaySchedule BuildThreeRowSchedule(
+        IEnumerable<PeriodOccurrence> periods,
+        JadwalDayOfWeek day,
+        TimeOnly? currentTime = null)
+    {
+        var now = currentTime ?? TimeOnly.FromDateTime(DateTime.Now);
+        var sorted = periods
+            .OrderBy(p => ParseMinutes(p.StartTime) ?? 0)
+            .ToList();
+
+        ScheduleTimelineItem? ptItem = null;
+        var academicPeriods = new List<ScheduleTimelineItem>();
+
+        foreach (var p in sorted)
+        {
+            var status = p.ChangeRecord != null
+                ? ClassLiveStatus.Changed
+                : ClassLiveStatus.Compute(p.StartTime, p.EndTime, now);
+
+            var isPt = p.PeriodName?.Contains("PT", StringComparison.OrdinalIgnoreCase) == true ||
+                       p.Subject?.Contains("Physical", StringComparison.OrdinalIgnoreCase) == true ||
+                       p.Subject?.Contains("رياضة", StringComparison.OrdinalIgnoreCase) == true;
+
+            // Physical Education period is isolated in its slot; on Friday it is explicitly omitted
+            if (isPt && day != JadwalDayOfWeek.Friday)
+            {
+                ptItem = ScheduleTimelineItem.ForPeriod(p, status);
+            }
+            else if (isPt && day == JadwalDayOfWeek.Friday)
+            {
+                // Friday: slot is completely removed
+                continue;
+            }
+            else
+            {
+                academicPeriods.Add(ScheduleTimelineItem.ForPeriod(p, status));
+            }
+        }
+
+        var row1 = new List<ScheduleTimelineItem>();
+        var row2 = new List<ScheduleTimelineItem>();
+        var row3 = new List<ScheduleTimelineItem>();
+        BreakBarInfo? break1 = null;
+        BreakBarInfo? break2 = null;
+
+        if (day == JadwalDayOfWeek.Saturday)
+        {
+            // Saturday Half-Day: 8 periods total (Periods 1-4 in Row 1, Recess, Periods 5-8 in Row 2)
+            row1.AddRange(academicPeriods.Take(4));
+            row2.AddRange(academicPeriods.Skip(4).Take(4));
+
+            var endRow1 = row1.LastOrDefault()?.Period?.EndTime ?? "10:35";
+            var startRow2 = row2.FirstOrDefault()?.Period?.StartTime ?? "10:55";
+            var endMin = ParseMinutes(endRow1) ?? 635;
+            var startMin = ParseMinutes(startRow2) ?? 655;
+            var dur = Math.Max(0, startMin - endMin);
+
+            break1 = new BreakBarInfo(
+                Id: "break_saturday_recess",
+                Name: "Morning Recess Break",
+                NamaazNote: "Mid-Morning Refreshment & Study Preparation",
+                StartTime: endRow1,
+                EndTime: startRow2,
+                DurationMinutes: dur > 0 ? dur : 20,
+                Icon: "☕"
+            );
+        }
+        else if (academicPeriods.Count > 0)
+        {
+            // Monday - Friday (Standard 3-Row Grid: 3 Subject Cards per row)
+            // Row 1: Periods 2, 3, 4 (3 cards) + small Physical Education slot (Mon-Thu)
+            row1.AddRange(academicPeriods.Take(3));
+
+            // Row 2: Periods 5, 6, 7 (3 cards)
+            row2.AddRange(academicPeriods.Skip(3).Take(3));
+
+            // Row 3: Periods 8, 9, 10 (3 cards)
+            row3.AddRange(academicPeriods.Skip(6).Take(3));
+
+            // Break 1: Recess Break between Row 1 and Row 2
+            var endRow1 = row1.LastOrDefault()?.Period?.EndTime ?? "10:35";
+            var startRow2 = row2.FirstOrDefault()?.Period?.StartTime ?? "10:55";
+            var endMin1 = ParseMinutes(endRow1) ?? 635;
+            var startMin2 = ParseMinutes(startRow2) ?? 655;
+            var dur1 = Math.Max(0, startMin2 - endMin1);
+
+            break1 = new BreakBarInfo(
+                Id: "break_recess",
+                Name: "Morning Recess Break",
+                NamaazNote: "Refreshment & Academic Preparation",
+                StartTime: endRow1,
+                EndTime: startRow2,
+                DurationMinutes: dur1 > 0 ? dur1 : 20,
+                Icon: "☕"
+            );
+
+            // Break 2: Lunch & Namaz Break between Row 2 and Row 3
+            if (row3.Count > 0)
+            {
+                var endRow2 = row2.LastOrDefault()?.Period?.EndTime ?? "12:40";
+                var startRow3 = row3.FirstOrDefault()?.Period?.StartTime ?? "14:00";
+                var endMin2 = ParseMinutes(endRow2) ?? 760;
+                var startMin3 = ParseMinutes(startRow3) ?? 840;
+                var dur2 = Math.Max(0, startMin3 - endMin2);
+
+                var isFriday = day == JadwalDayOfWeek.Friday;
+                break2 = new BreakBarInfo(
+                    Id: isFriday ? "break_jumua" : "break_lunch_namaz",
+                    Name: isFriday ? "Jumua Mubarak • Namaz & Lunch Break" : "Lunch & Namaz Break",
+                    NamaazNote: isFriday ? "🕌 Jumua Namaz in Masjid" : "🕌 Zohr Namaaz • 1:15 PM",
+                    StartTime: endRow2,
+                    EndTime: startRow3,
+                    DurationMinutes: dur2 > 0 ? dur2 : 80,
+                    Icon: isFriday ? "🕌" : "☀️"
+                );
+            }
+        }
+
+        return new ThreeRowDaySchedule(
+            Day: day,
+            PhysicalEducationItem: ptItem,
+            Row1Items: row1.AsReadOnly(),
+            Break1: break1,
+            Row2Items: row2.AsReadOnly(),
+            Break2: break2,
+            Row3Items: row3.AsReadOnly()
+        );
+    }
+}
+
+public record BreakBarInfo(
+    string Id,
+    string Name,
+    string NamaazNote,
+    string StartTime,
+    string EndTime,
+    int DurationMinutes,
+    string Icon
+)
+{
+    public string TimeRangeFormatted => $"{StartTime} – {EndTime}";
+    public string DurationFormatted => ScheduleTimelineBuilder.FormatDuration(DurationMinutes);
+}
+
+public record ThreeRowDaySchedule(
+    JadwalDayOfWeek Day,
+    ScheduleTimelineItem? PhysicalEducationItem,
+    IReadOnlyList<ScheduleTimelineItem> Row1Items,
+    BreakBarInfo? Break1,
+    IReadOnlyList<ScheduleTimelineItem> Row2Items,
+    BreakBarInfo? Break2,
+    IReadOnlyList<ScheduleTimelineItem> Row3Items
+)
+{
+    public bool HasPhysicalEducation => PhysicalEducationItem != null && Day != JadwalDayOfWeek.Friday;
+    public bool HasRow3 => Row3Items.Count > 0;
 }

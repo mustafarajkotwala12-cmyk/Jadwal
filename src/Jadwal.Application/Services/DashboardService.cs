@@ -36,6 +36,7 @@ public class DashboardService
         var currentTime = _timeProvider.CurrentTime;
         var timeline = ScheduleTimelineBuilder.BuildTimeline(dayPeriods, currentTime);
         var (row1, row2) = ScheduleTimelineBuilder.SplitIntoTwoHorizontalRows(timeline, targetDay);
+        var threeRowSchedule = ScheduleTimelineBuilder.BuildThreeRowSchedule(dayPeriods, targetDay, currentTime);
 
         var changes = await _changeRepository.GetChangesAsync(ct);
         var activeChanges = changes.Where(c => !c.IsAcknowledged).ToList().AsReadOnly();
@@ -67,7 +68,8 @@ public class DashboardService
             Row2Items: row2,
             ActiveChanges: activeChanges,
             ActivePeriod: activePeriod,
-            NextPeriod: nextPeriod
+            NextPeriod: nextPeriod,
+            ThreeRowSchedule: threeRowSchedule
         );
     }
 

@@ -149,4 +149,70 @@ public class DomainModelTests
         diffs.Should().Contain(d => d.PeriodId == "p2" && d.ChangeType == ChangeType.SubjectChanged && d.NewSubject == "Economics");
         diffs.Should().Contain(d => d.PeriodId == "p3" && d.ChangeType == ChangeType.Added && d.NewSubject == "Math");
     }
+
+    [Fact]
+    public void BuildThreeRowSchedule_Monday_IncludesPhysicalEducationInSmallSlot_AndThreeRows()
+    {
+        var periods = new List<PeriodOccurrence>
+        {
+            new("pt", JadwalDayOfWeek.Monday, "2026-09-07", "(PT)", "06:00", "07:00", "Physical Training", "خيمة الرياضة"),
+            new("p2", JadwalDayOfWeek.Monday, "2026-09-07", "Period 2", "08:50", "09:25", "Subject 2", "Room A"),
+            new("p3", JadwalDayOfWeek.Monday, "2026-09-07", "Period 3", "09:25", "10:00", "Subject 3", "Room B"),
+            new("p4", JadwalDayOfWeek.Monday, "2026-09-07", "Period 4", "10:00", "10:35", "Subject 4", "Room C"),
+            new("p5", JadwalDayOfWeek.Monday, "2026-09-07", "Period 5", "10:55", "11:30", "Subject 5", "Room D"),
+            new("p6", JadwalDayOfWeek.Monday, "2026-09-07", "Period 6", "11:30", "12:05", "Subject 6", "Room E"),
+            new("p7", JadwalDayOfWeek.Monday, "2026-09-07", "Period 7", "12:05", "12:40", "Subject 7", "Room F"),
+            new("p8", JadwalDayOfWeek.Monday, "2026-09-07", "Period 8", "14:00", "14:35", "Subject 8", "Room G"),
+            new("p9", JadwalDayOfWeek.Monday, "2026-09-07", "Period 9", "14:35", "15:10", "Subject 9", "Room H"),
+            new("p10", JadwalDayOfWeek.Monday, "2026-09-07", "Period 10", "15:10", "15:45", "Subject 10", "Room I")
+        };
+
+        var three = ScheduleTimelineBuilder.BuildThreeRowSchedule(periods, JadwalDayOfWeek.Monday);
+
+        three.HasPhysicalEducation.Should().BeTrue();
+        three.PhysicalEducationItem.Should().NotBeNull();
+        three.PhysicalEducationItem!.Period!.Subject.Should().Be("Physical Training");
+
+        three.Row1Items.Should().HaveCount(3);
+        three.Break1.Should().NotBeNull();
+        three.Break1!.Name.Should().Contain("Recess");
+
+        three.Row2Items.Should().HaveCount(3);
+        three.Break2.Should().NotBeNull();
+        three.Break2!.Name.Should().Contain("Lunch & Namaz");
+
+        three.Row3Items.Should().HaveCount(3);
+        three.HasRow3.Should().BeTrue();
+    }
+
+    [Fact]
+    public void BuildThreeRowSchedule_Friday_ExplicitlyRemovesPhysicalEducationSlot()
+    {
+        var periods = new List<PeriodOccurrence>
+        {
+            new("pt", JadwalDayOfWeek.Friday, "2026-09-11", "(PT)", "06:00", "07:00", "Physical Training", "خيمة الرياضة"),
+            new("p2", JadwalDayOfWeek.Friday, "2026-09-11", "Period 2", "08:50", "09:25", "Subject 2", "Room A"),
+            new("p3", JadwalDayOfWeek.Friday, "2026-09-11", "Period 3", "09:25", "10:00", "Subject 3", "Room B"),
+            new("p4", JadwalDayOfWeek.Friday, "2026-09-11", "Period 4", "10:00", "10:35", "Subject 4", "Room C"),
+            new("p5", JadwalDayOfWeek.Friday, "2026-09-11", "Period 5", "10:55", "11:30", "Subject 5", "Room D"),
+            new("p6", JadwalDayOfWeek.Friday, "2026-09-11", "Period 6", "11:30", "12:05", "Subject 6", "Room E"),
+            new("p7", JadwalDayOfWeek.Friday, "2026-09-11", "Period 7", "12:05", "12:40", "Subject 7", "Room F"),
+            new("p8", JadwalDayOfWeek.Friday, "2026-09-11", "Period 8", "14:00", "14:35", "Subject 8", "Room G"),
+            new("p9", JadwalDayOfWeek.Friday, "2026-09-11", "Period 9", "14:35", "15:10", "Subject 9", "Room H"),
+            new("p10", JadwalDayOfWeek.Friday, "2026-09-11", "Period 10", "15:10", "15:45", "Subject 10", "Room I")
+        };
+
+        var three = ScheduleTimelineBuilder.BuildThreeRowSchedule(periods, JadwalDayOfWeek.Friday);
+
+        // Friday rule: PE slot MUST be removed
+        three.HasPhysicalEducation.Should().BeFalse();
+        three.PhysicalEducationItem.Should().BeNull();
+
+        three.Row1Items.Should().HaveCount(3);
+        three.Break1.Should().NotBeNull();
+        three.Row2Items.Should().HaveCount(3);
+        three.Break2.Should().NotBeNull();
+        three.Break2!.Name.Should().Contain("Jumua");
+        three.Row3Items.Should().HaveCount(3);
+    }
 }

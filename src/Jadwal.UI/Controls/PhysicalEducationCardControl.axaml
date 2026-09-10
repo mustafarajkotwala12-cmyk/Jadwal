@@ -1,0 +1,159 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             xmlns:models="using:Jadwal.Domain.Models"
+             mc:Ignorable="d" d:DesignWidth="150" d:DesignHeight="165"
+             x:Class="Jadwal.UI.Controls.PhysicalEducationCardControl"
+             x:DataType="vm:ClassCardItemViewModel">
+
+    <Border Height="165"
+            CornerRadius="14"
+            BorderThickness="1.5"
+            BorderBrush="{DynamicResource CardBorderBrush}"
+            Background="{DynamicResource CardBackgroundBrush}"
+            BoxShadow="0 4 14 0 #12000000"
+            Margin="4">
+        <Border.Transitions>
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+            </Transitions>
+        </Border.Transitions>
+
+        <Panel>
+            <!-- FRONT FACE: PHYSICAL EDUCATION COMPACT VIEW -->
+            <Grid RowDefinitions="Auto,*,Auto" Margin="10,8" IsVisible="{Binding !IsFlipped}">
+                <!-- Top Header: (PT) Badge & Live Status -->
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                    <Border Grid.Column="0" Background="{DynamicResource BronzeSoftBrush}"
+                            CornerRadius="6" Padding="5,2">
+                        <TextBlock Text="PT" FontSize="10" FontWeight="Bold"
+                                   Foreground="{DynamicResource BronzeBrush}" />
+                    </Border>
+                    <Border Grid.Column="2" CornerRadius="8" Padding="6,2"
+                            Background="{DynamicResource EmeraldSoftBrush}">
+                        <TextBlock Text="{Binding StatusText}" FontSize="8" FontWeight="Bold"
+                                   Foreground="{DynamicResource EmeraldBrush}" />
+                    </Border>
+                </Grid>
+
+                <!-- Center Content: Icon + Physical Education + Arabic Details -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2">
+                    <TextBlock Text="🏃" FontSize="20" HorizontalAlignment="Center" />
+                    <TextBlock Text="Physical Education"
+                               FontSize="12" FontWeight="Bold"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding Period.Details}"
+                               FontFamily="{StaticResource ArabicCalligraphyFont}"
+                               FontSize="13"
+                               TextAlignment="Center"
+                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+
+                <!-- Bottom Row: Time Range & Tasks Flip Pill -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Period.StartTime, StringFormat='{}{0} - 07:00'}"
+                               FontFamily="Courier New, monospace"
+                               FontSize="9" Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center" />
+
+                    <!-- Tasks Flip Button -->
+                    <Button Grid.Column="1"
+                            Click="OnFlipClicked"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="4,2" CornerRadius="6"
+                            ToolTip.Tip="View / Add tasks">
+                        <Border Background="{DynamicResource GoldSoftBrush}"
+                                CornerRadius="6" Padding="6,2">
+                            <StackPanel Orientation="Horizontal" Spacing="4">
+                                <TextBlock Text="📝" FontSize="9" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding Tasks.Count, StringFormat='{}{0}'}"
+                                           FontSize="9" FontWeight="Bold"
+                                           Foreground="{DynamicResource BronzeBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                    </Button>
+                </Grid>
+            </Grid>
+
+            <!-- BACK FACE: TASKS LIST & QUICK ADD (FOR PHYSICAL EDUCATION) -->
+            <Grid RowDefinitions="Auto,*,Auto" Margin="10,8" IsVisible="{Binding IsFlipped}">
+                <!-- Back Header: Title & Close -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                    <TextBlock Grid.Column="0"
+                               Text="PT Tasks"
+                               FontSize="10" FontWeight="Bold"
+                               Foreground="{DynamicResource BronzeBrush}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1"
+                            Click="OnFlipClicked"
+                            Content="✕" FontSize="9"
+                            Background="Transparent" BorderThickness="0"
+                            Padding="4,2" CornerRadius="4"
+                            Foreground="{DynamicResource TextMutedBrush}"
+                            VerticalAlignment="Center" />
+                </Grid>
+
+                <!-- Tasks ScrollViewer -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="No tasks yet"
+                                   FontSize="9" Foreground="{DynamicResource TextMutedBrush}"
+                                   IsVisible="{Binding !Tasks.Count}"
+                                   HorizontalAlignment="Center" Margin="0,8" />
+                        <ItemsControl ItemsSource="{Binding Tasks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="models:TaskItem">
+                                    <Border Background="{DynamicResource TaskItemBgBrush}"
+                                            CornerRadius="4" Padding="4,2">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <CheckBox Grid.Column="0"
+                                                      IsChecked="{Binding IsCompleted, Mode=OneWay}"
+                                                      Command="{Binding $parent[UserControl].((vm:ClassCardItemViewModel)DataContext).ToggleTaskCompletionCommand}"
+                                                      CommandParameter="{Binding}"
+                                                      Margin="0,0,4,0" MinWidth="16" />
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding Title}"
+                                                       FontSize="9"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center" />
+                                            <Button Grid.Column="2"
+                                                    Command="{Binding $parent[UserControl].((vm:ClassCardItemViewModel)DataContext).DeleteTaskCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    Content="×" FontSize="10"
+                                                    Background="Transparent" BorderThickness="0"
+                                                    Foreground="#EF4444" Padding="2,0" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Quick Add Input -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                    <TextBox Grid.Column="0"
+                             Text="{Binding NewTaskTitle}"
+                             PlaceholderText="Task..."
+                             FontSize="9" Padding="4,2"
+                             Height="22" CornerRadius="4"
+                             KeyDown="OnNewTaskKeyDown" />
+                    <Button Grid.Column="1"
+                            Command="{Binding AddTaskCommand}"
+                            Content="+" FontSize="10" FontWeight="Bold"
+                            Background="{DynamicResource EmeraldBrush}"
+                            Foreground="White"
+                            CornerRadius="4" Padding="6,2" Height="22"
+                            Margin="3,0,0,0" />
+                </Grid>
+            </Grid>
+        </Panel>
+    </Border>
+</UserControl>

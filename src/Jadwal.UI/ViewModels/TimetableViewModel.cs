@@ -48,6 +48,31 @@ public partial class TimetableViewModel : ViewModelBase
         new(JadwalDayOfWeek.Saturday)
     };
 
+    [ObservableProperty]
+    private ClassCardItemViewModel? _physicalEducationCard;
+
+    [ObservableProperty]
+    private bool _hasPhysicalEducation = false;
+
+    [ObservableProperty]
+    private BreakBarViewModel? _break1;
+
+    [ObservableProperty]
+    private bool _hasBreak1 = false;
+
+    [ObservableProperty]
+    private BreakBarViewModel? _break2;
+
+    [ObservableProperty]
+    private bool _hasBreak2 = false;
+
+    [ObservableProperty]
+    private bool _hasRow3 = false;
+
+    public ObservableCollection<ClassCardItemViewModel> Row1Cards { get; } = new();
+    public ObservableCollection<ClassCardItemViewModel> Row2Cards { get; } = new();
+    public ObservableCollection<ClassCardItemViewModel> Row3Cards { get; } = new();
+
     public ObservableCollection<object> Row1Items { get; } = new();
     public ObservableCollection<object> Row2Items { get; } = new();
 
@@ -121,10 +146,109 @@ public partial class TimetableViewModel : ViewModelBase
         }
 
         var dayPeriods = snapshot.Periods.Where(p => p.Day == SelectedDay).ToList();
+        var three = ScheduleTimelineBuilder.BuildThreeRowSchedule(dayPeriods, SelectedDay);
+        var query = SearchText?.Trim() ?? string.Empty;
+
+        Row1Cards.Clear();
+        Row2Cards.Clear();
+        Row3Cards.Clear();
+
+        // Physical Education Slot (Enabled on Mon-Thu in small slot; omitted completely on Friday)
+        if (three.HasPhysicalEducation && three.PhysicalEducationItem?.Period != null)
+        {
+            if (string.IsNullOrEmpty(query) || MatchesSearch(three.PhysicalEducationItem.Period, query))
+            {
+                var peCard = new ClassCardItemViewModel(three.PhysicalEducationItem.Period, three.PhysicalEducationItem.Status, _taskService);
+                var peTasks = allTasks.Where(t => IsTaskRelatedToPeriod(t, three.PhysicalEducationItem.Period));
+                foreach (var t in peTasks) peCard.Tasks.Add(t);
+                PhysicalEducationCard = peCard;
+                HasPhysicalEducation = true;
+            }
+            else
+            {
+                PhysicalEducationCard = null;
+                HasPhysicalEducation = false;
+            }
+        }
+        else
+        {
+            PhysicalEducationCard = null;
+            HasPhysicalEducation = false;
+        }
+
+        // Row 1 Cards
+        foreach (var item in three.Row1Items)
+        {
+            if (item.Period != null)
+            {
+                if (!string.IsNullOrEmpty(query) && !MatchesSearch(item.Period, query))
+                    continue;
+
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
+                foreach (var t in related) cardVm.Tasks.Add(t);
+                Row1Cards.Add(cardVm);
+            }
+        }
+
+        // Break 1 (Recess Break)
+        if (three.Break1 != null && string.IsNullOrEmpty(query))
+        {
+            Break1 = new BreakBarViewModel(three.Break1);
+            HasBreak1 = true;
+        }
+        else
+        {
+            Break1 = null;
+            HasBreak1 = false;
+        }
+
+        // Row 2 Cards
+        foreach (var item in three.Row2Items)
+        {
+            if (item.Period != null)
+            {
+                if (!string.IsNullOrEmpty(query) && !MatchesSearch(item.Period, query))
+                    continue;
+
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
+                foreach (var t in related) cardVm.Tasks.Add(t);
+                Row2Cards.Add(cardVm);
+            }
+        }
+
+        // Break 2 (Lunch & Namaz Break)
+        if (three.Break2 != null && string.IsNullOrEmpty(query))
+        {
+            Break2 = new BreakBarViewModel(three.Break2);
+            HasBreak2 = true;
+        }
+        else
+        {
+            Break2 = null;
+            HasBreak2 = false;
+        }
+
+        // Row 3 Cards
+        foreach (var item in three.Row3Items)
+        {
+            if (item.Period != null)
+            {
+                if (!string.IsNullOrEmpty(query) && !MatchesSearch(item.Period, query))
+                    continue;
+
+                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
+                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
+                foreach (var t in related) cardVm.Tasks.Add(t);
+                Row3Cards.Add(cardVm);
+            }
+        }
+        HasRow3 = Row3Cards.Count > 0;
+
+        // Backwards compatibility for Row1Items and Row2Items
         var timeline = ScheduleTimelineBuilder.BuildTimeline(dayPeriods);
         var (row1, row2) = ScheduleTimelineBuilder.SplitIntoTwoHorizontalRows(timeline, SelectedDay);
-
-        var query = SearchText?.Trim() ?? string.Empty;
 
         foreach (var item in row1)
         {
@@ -164,7 +288,7 @@ public partial class TimetableViewModel : ViewModelBase
             }
         }
 
-        IsEmptyDay = Row1Items.Count == 0 && Row2Items.Count == 0;
+        IsEmptyDay = Row1Cards.Count == 0 && Row2Cards.Count == 0;
     }
 
     private static bool IsTaskRelatedToPeriod(TaskItem task, PeriodOccurrence period)
