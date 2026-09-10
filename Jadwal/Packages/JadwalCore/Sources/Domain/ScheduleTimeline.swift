@@ -176,6 +176,57 @@ public enum ScheduleTimelineBuilder {
         return "Break"
     }
 
+    /// Splits items into two horizontal rows according to day schedule rules (Mon-Thu, Fri, Sat)
+    public static func splitIntoTwoHorizontalRows(
+        items: [ScheduleTimelineItem],
+        day: DayOfWeek
+    ) -> (row1: [ScheduleTimelineItem], row2: [ScheduleTimelineItem]) {
+        guard !items.isEmpty else { return ([], []) }
+
+        switch day {
+        case .monday, .tuesday, .wednesday, .thursday, .friday:
+            // Find the index of Period 5 to split cleanly
+            if let p5Index = items.firstIndex(where: {
+                if case .classPeriod(let p, _) = $0 {
+                    return p.periodName.contains("5")
+                }
+                return false
+            }) {
+                let splitPoint = p5Index + 1
+                let row1 = Array(items[0..<splitPoint])
+                let row2 = Array(items[splitPoint..<items.count])
+                return (row1, row2)
+            }
+
+        case .saturday:
+            // On Saturday, Row 1 includes Periods 1–4 and the Recess break right after Period 4.
+            // Row 2 begins with Period 5 and continues through Period 8.
+            if let p4Index = items.firstIndex(where: {
+                if case .classPeriod(let p, _) = $0 {
+                    return p.periodName.contains("4")
+                }
+                return false
+            }) {
+                var splitPoint = p4Index + 1
+                if splitPoint < items.count, case .breakBlock = items[splitPoint] {
+                    splitPoint += 1
+                }
+                let row1 = Array(items[0..<splitPoint])
+                let row2 = Array(items[splitPoint..<items.count])
+                return (row1, row2)
+            }
+
+        case .sunday:
+            return (items, [])
+        }
+
+        // Fallback: split near the middle
+        let mid = (items.count + 1) / 2
+        let row1 = Array(items[0..<mid])
+        let row2 = Array(items[mid..<items.count])
+        return (row1, row2)
+    }
+
     /// Divides timeline items into two balanced columns (Morning / Afternoon)
     /// to ensure zero vertical scrolling on standard viewports.
     public static func splitIntoTwoColumns(items: [ScheduleTimelineItem]) -> (morning: [ScheduleTimelineItem], afternoon: [ScheduleTimelineItem]) {
@@ -200,5 +251,55 @@ public enum ScheduleTimelineBuilder {
         let morning = Array(items[0..<mid])
         let afternoon = Array(items[mid..<items.count])
         return (morning, afternoon)
+    }
+}
+
+public struct DayScheduleRule: Sendable, Equatable {
+    public let day: DayOfWeek
+    public let hasPhysicalTraining: Bool
+    public let isHalfDay: Bool
+    public let daySubtitle: String
+    public let row1Title: String
+    public let row2Title: String
+
+    public static func rule(for day: DayOfWeek) -> DayScheduleRule {
+        switch day {
+        case .monday, .tuesday, .wednesday, .thursday:
+            return DayScheduleRule(
+                day: day,
+                hasPhysicalTraining: true,
+                isHalfDay: false,
+                daySubtitle: "Full Academic Schedule • 10 Periods",
+                row1Title: "Morning Prep & Early Sessions (Periods 1–5)",
+                row2Title: "Midday & Afternoon Sessions (Periods 6–10)"
+            )
+        case .friday:
+            return DayScheduleRule(
+                day: day,
+                hasPhysicalTraining: false,
+                isHalfDay: false,
+                daySubtitle: "Jumua Mubarak • No Morning PT (Periods 2–10)",
+                row1Title: "Morning Sessions (Periods 2–5)",
+                row2Title: "Midday & Post-Jumua Sessions (Periods 6–10)"
+            )
+        case .saturday:
+            return DayScheduleRule(
+                day: day,
+                hasPhysicalTraining: false,
+                isHalfDay: true,
+                daySubtitle: "Saturday Half-Day • Concludes at 1:15 PM",
+                row1Title: "Early Morning Sessions (Periods 1–4)",
+                row2Title: "Late Morning Sessions (Periods 5–8)"
+            )
+        case .sunday:
+            return DayScheduleRule(
+                day: day,
+                hasPhysicalTraining: false,
+                isHalfDay: true,
+                daySubtitle: "Weekend • No Classes Scheduled",
+                row1Title: "Weekend",
+                row2Title: ""
+            )
+        }
     }
 }

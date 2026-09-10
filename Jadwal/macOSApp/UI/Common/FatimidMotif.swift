@@ -71,6 +71,10 @@ public enum FatimidPalette {
     public static let bronze = Color(red: 0.76, green: 0.58, blue: 0.28)
     public static let bronzeSoft = Color(red: 0.76, green: 0.58, blue: 0.28).opacity(0.15)
     
+    /// Brilliant gold
+    public static let gold = Color(red: 0.88, green: 0.71, blue: 0.25)
+    public static let goldSoft = Color(red: 0.88, green: 0.71, blue: 0.25).opacity(0.15)
+    
     /// Watermark pattern fill
     public static let watermark = Color.primary.opacity(0.04)
 }

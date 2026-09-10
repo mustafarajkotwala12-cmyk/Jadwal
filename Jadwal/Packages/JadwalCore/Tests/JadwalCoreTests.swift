@@ -219,4 +219,79 @@ struct JadwalCoreTests {
         #expect(!columns.morning.isEmpty)
         #expect(!columns.afternoon.isEmpty)
     }
+
+    @Test("DayScheduleRule accurately distinguishes Mon-Thu, Friday, and Saturday exceptions")
+    func testDayScheduleRules() {
+        let monRule = DayScheduleRule.rule(for: .monday)
+        #expect(monRule.hasPhysicalTraining == true)
+        #expect(monRule.isHalfDay == false)
+        #expect(monRule.daySubtitle.contains("10 Periods"))
+
+        let friRule = DayScheduleRule.rule(for: .friday)
+        #expect(friRule.hasPhysicalTraining == false)
+        #expect(friRule.isHalfDay == false)
+        #expect(friRule.daySubtitle.contains("Jumua Mubarak"))
+        #expect(friRule.row1Title.contains("Periods 2–5"))
+
+        let satRule = DayScheduleRule.rule(for: .saturday)
+        #expect(satRule.hasPhysicalTraining == false)
+        #expect(satRule.isHalfDay == true)
+        #expect(satRule.daySubtitle.contains("Saturday Half-Day"))
+        #expect(satRule.row1Title.contains("Periods 1–4"))
+        #expect(satRule.row2Title.contains("Periods 5–8"))
+    }
+
+    @Test("splitIntoTwoHorizontalRows respects Friday and Saturday partition boundaries")
+    func testHorizontalRowSplitting() {
+        // Build 10 mock periods for Mon-Thu
+        let periodsMon = (1...10).map { i in
+            PeriodOccurrence(
+                day: .monday,
+                dateString: "2026-09-07",
+                periodName: "Period \(i)",
+                startTime: String(format: "%02d:00", 6 + i),
+                endTime: String(format: "%02d:45", 6 + i),
+                subject: "Subject \(i)",
+                details: "Room \(i)"
+            )
+        }
+        let timelineMon = ScheduleTimelineBuilder.buildTimeline(from: periodsMon)
+        let splitMon = ScheduleTimelineBuilder.splitIntoTwoHorizontalRows(items: timelineMon, day: .monday)
+        #expect(!splitMon.row1.isEmpty)
+        #expect(!splitMon.row2.isEmpty)
+        // Row 1 should contain Period 5
+        let hasP5InRow1 = splitMon.row1.contains {
+            if case .classPeriod(let p, _) = $0 { return p.periodName == "Period 5" }
+            return false
+        }
+        #expect(hasP5InRow1)
+
+        // Build 8 mock periods for Saturday
+        let periodsSat = (1...8).map { i in
+            PeriodOccurrence(
+                day: .saturday,
+                dateString: "2026-09-12",
+                periodName: "Period \(i)",
+                startTime: String(format: "%02d:00", 7 + i),
+                endTime: String(format: "%02d:45", 7 + i),
+                subject: "Subject \(i)",
+                details: "Room \(i)"
+            )
+        }
+        let timelineSat = ScheduleTimelineBuilder.buildTimeline(from: periodsSat)
+        let splitSat = ScheduleTimelineBuilder.splitIntoTwoHorizontalRows(items: timelineSat, day: .saturday)
+        #expect(!splitSat.row1.isEmpty)
+        #expect(!splitSat.row2.isEmpty)
+        // Sat Row 1 ends with Period 4
+        let hasP4InSatRow1 = splitSat.row1.contains {
+            if case .classPeriod(let p, _) = $0 { return p.periodName == "Period 4" }
+            return false
+        }
+        let hasP5InSatRow2 = splitSat.row2.contains {
+            if case .classPeriod(let p, _) = $0 { return p.periodName == "Period 5" }
+            return false
+        }
+        #expect(hasP4InSatRow1)
+        #expect(hasP5InSatRow2)
+    }
 }

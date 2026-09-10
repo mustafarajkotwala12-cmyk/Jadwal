@@ -1,0 +1,129 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             xmlns:ctrl="using:Jadwal.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="Jadwal.UI.Views.TimetableView"
+             x:DataType="vm:TimetableViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="16" Margin="24">
+
+            <!-- HEADER & DAY SELECTOR TABS -->
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                    <!-- Day Selector Buttons -->
+                    <ItemsControl ItemsSource="{Binding AvailableDays}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="6" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding}"
+                                        Command="{Binding $parent[UserControl].((vm:TimetableViewModel)DataContext).SelectDayCommand}"
+                                        CommandParameter="{Binding}"
+                                        Padding="14,8" CornerRadius="10"
+                                        FontWeight="SemiBold" FontSize="13" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Search box -->
+                <TextBox Grid.Column="1"
+                         Text="{Binding SearchText}"
+                         PlaceholderText="Search subject, details..."
+                         Width="240" CornerRadius="8"
+                         VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- SELECTED DAY BANNER -->
+            <Border CornerRadius="16"
+                    Background="{DynamicResource BannerGradientBrush}"
+                    Padding="20,16"
+                    BoxShadow="0 4 16 0 #20145B96">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="{Binding DayArabicTitle}"
+                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                   FontSize="28" FontWeight="Bold"
+                                   Foreground="White" />
+                        <TextBlock Text="{Binding DayTitle}"
+                                   FontSize="16" FontWeight="SemiBold"
+                                   Foreground="#E2E8F0" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding DaySubtitle}"
+                               FontSize="13" Foreground="#CBD5E1"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- ROW 1: MORNING SESSIONS -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Row1Title}"
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource BronzeBrush}"
+                           Margin="4,0,0,0" />
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Row1Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.DataTemplates>
+                            <DataTemplate DataType="vm:ClassCardItemViewModel">
+                                <ctrl:ClassCardControl />
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:BreakPillItemViewModel">
+                                <ctrl:VerticalBreakPillControl />
+                            </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- ROW 2: AFTERNOON SESSIONS -->
+            <StackPanel Spacing="10" IsVisible="{Binding !IsEmptyDay}">
+                <TextBlock Text="{Binding Row2Title}"
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource BronzeBrush}"
+                           Margin="4,0,0,0" />
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Row2Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.DataTemplates>
+                            <DataTemplate DataType="vm:ClassCardItemViewModel">
+                                <ctrl:ClassCardControl />
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:BreakPillItemViewModel">
+                                <ctrl:VerticalBreakPillControl />
+                            </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- EMPTY DAY NOTICE -->
+            <Border IsVisible="{Binding IsEmptyDay}"
+                    Background="#0A000000" CornerRadius="12"
+                    Padding="40" HorizontalAlignment="Center" Margin="0,40,0,0">
+                <TextBlock Text="No classes matching this schedule."
+                           FontWeight="SemiBold" FontSize="15"
+                           HorizontalAlignment="Center" />
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -6,9 +6,10 @@ public struct TimetableView: View {
     @State private var selectedDay: DayOfWeek = .monday
     @State private var showingAddTaskForPeriod: PeriodOccurrence? = nil
     @State private var newTaskTitle: String = ""
+    @State private var currentTime: Date = Date()
+    private let liveTicker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     public init() {}
-
     public var body: some View {
         VStack(spacing: 0) {
             // Day Selector Picker
@@ -37,8 +38,11 @@ public struct TimetableView: View {
 
             Divider()
 
-            // Periods List
+            // Timetable Content for Selected Day
             let dayPeriods = env.timetableSnapshot?.periods(for: selectedDay) ?? []
+            let rule = DayScheduleRule.rule(for: selectedDay)
+            let timelineItems = ScheduleTimelineBuilder.buildTimeline(from: dayPeriods, currentTime: currentTime)
+            let rowSplit = ScheduleTimelineBuilder.splitIntoTwoHorizontalRows(items: timelineItems, day: selectedDay)
 
             if dayPeriods.isEmpty {
                 ContentUnavailableView(
@@ -48,19 +52,67 @@ public struct TimetableView: View {
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(dayPeriods) { period in
-                            PeriodCardView(period: period) {
-                                showingAddTaskForPeriod = period
+                ScrollView(.vertical, showsIndicators: true) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Date Banner matching Freeform sketch
+                        TimetableDateBanner(
+                            dayOfWeek: selectedDay,
+                            date: currentTime,
+                            todayPeriods: dayPeriods,
+                            rule: rule
+                        )
+
+                        // Row 1: Morning Sessions & Breaks
+                        if !rowSplit.row1.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                rowHeader(
+                                    title: rule.row1Title,
+                                    icon: "sun.and.horizon.fill",
+                                    color: FatimidPalette.emerald
+                                )
+
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(alignment: .top, spacing: 10) {
+                                        ForEach(rowSplit.row1) { item in
+                                            renderTimelineItem(item)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 2)
+                                }
+                            }
+                        }
+
+                        // Row 2: Midday / Afternoon Sessions & Breaks
+                        if !rowSplit.row2.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                rowHeader(
+                                    title: rule.row2Title,
+                                    icon: "sun.max.fill",
+                                    color: FatimidPalette.bronze
+                                )
+
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(alignment: .top, spacing: 10) {
+                                        ForEach(rowSplit.row2) { item in
+                                            renderTimelineItem(item)
+                                        }
+                                    }
+                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, 2)
+                                }
                             }
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
                 }
             }
         }
         .navigationTitle("Weekly Timetable")
+        .onReceive(liveTicker) { date in
+            currentTime = date
+        }
         .sheet(item: $showingAddTaskForPeriod) { period in
             AddTaskModal(period: period) { title in
                 Task {
@@ -73,72 +125,40 @@ public struct TimetableView: View {
             }
         }
     }
-}
 
-struct PeriodCardView: View {
-    let period: PeriodOccurrence
-    let onAddTask: () -> Void
+    // MARK: - Row Header
+    private func rowHeader(title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(color)
 
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // Time Badge
-            VStack(alignment: .leading, spacing: 4) {
-                Text(period.periodName)
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
-                Text(period.startTime)
-                    .font(.headline)
-                Text(period.endTime)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(width: 80, alignment: .leading)
-
-            Divider()
-
-            // Subject & Teacher Details
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    Text(period.subject)
-                        .font(period.subject.containsArabic ? .kanzalLulu(size: 20) : .title3.weight(.medium))
-                        .foregroundStyle(.primary)
-
-                    if let change = period.changeRecord {
-                        HStack(spacing: 3) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                            Text(change.summaryMessage)
-                        }
-                        .font(.caption2.bold())
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.orange.opacity(0.15)))
-                    }
-                }
-
-                if !period.details.isEmpty {
-                    Label(period.details, systemImage: "person.text.rectangle")
-                        .font(period.details.containsArabic ? .kanzalLulu(size: 13) : .subheadline)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            Text(title.uppercased())
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .tracking(0.6)
 
             Spacer()
-
-            // Action Button
-            Button(action: onAddTask) {
-                Image(systemName: "plus.circle")
-                    .font(.title3)
-            }
-            .buttonStyle(.plain)
-            .help("Attach task to this class")
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(NSColor.controlBackgroundColor))
-                .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
-        )
+        .padding(.horizontal, 2)
+    }
+
+    // MARK: - Timeline Item Renderer
+    @ViewBuilder
+    private func renderTimelineItem(_ item: ScheduleTimelineItem) -> some View {
+        switch item {
+        case .classPeriod(let period, let status):
+            ClassCardView(period: period, status: status)
+                .frame(width: 175, height: 215)
+        case .breakBlock(_, let name, let startTime, let endTime, let durationMinutes):
+            VerticalBreakPillView(
+                name: name,
+                startTime: startTime,
+                endTime: endTime,
+                durationMinutes: durationMinutes
+            )
+            .frame(width: 54, height: 215)
+        }
     }
 }
 

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "11111111-1111-1111-1111-111111111111",
+    "title": "Memorize Surah Al-Naba (1-10)",
+    "notes": "Revise with Ahsan before Period 2",
+    "priority": "high",
+    "category": "hifz",
+    "isCompleted": false,
+    "createdAt": "2026-09-07T06:30:00Z",
+    "completedAt": null,
+    "linkedSubject": "الرسالة الشريفة",
+    "linkedPeriodId": "2026-09-07_Period_2",
+    "discrepancy": null
+  },
+  {
+    "id": "22222222-2222-2222-2222-222222222222",
+    "title": "Prepare Linguistics Essay on Morphology",
+    "notes": "Chapter 3 exercise questions",
+    "priority": "urgent",
+    "category": "academic",
+    "isCompleted": false,
+    "createdAt": "2026-09-07T07:00:00Z",
+    "completedAt": null,
+    "linkedSubject": "Linguistics",
+    "linkedPeriodId": "2026-09-07_Period_4",
+    "discrepancy": null
+  },
+  {
+    "id": "33333333-3333-3333-3333-333333333333",
+    "title": "Review Hadith Notes for Friday Seminar",
+    "notes": "Focus on Sanad transmission",
+    "priority": "medium",
+    "category": "revision",
+    "isCompleted": true,
+    "createdAt": "2026-09-06T14:00:00Z",
+    "completedAt": "2026-09-07T08:00:00Z",
+    "linkedSubject": "كتاب تأويل الدعائم",
+    "linkedPeriodId": "2026-09-07_Period_3",
+    "discrepancy": null
+  }
+]

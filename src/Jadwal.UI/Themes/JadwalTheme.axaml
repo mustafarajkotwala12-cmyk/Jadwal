@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Brand Palette Colors -->
+    <Color x:Key="EmeraldColor">#147A5C</Color>
+    <Color x:Key="EmeraldSoftColor">#20147A5C</Color>
+    <Color x:Key="BronzeColor">#C29447</Color>
+    <Color x:Key="BronzeSoftColor">#25C29447</Color>
+    <Color x:Key="GoldColor">#E0B540</Color>
+    <Color x:Key="GoldSoftColor">#25E0B540</Color>
+    <Color x:Key="CyanBlueColor">#1E87C7</Color>
+    <Color x:Key="DeepNavyColor">#145F96</Color>
+    <Color x:Key="CardBorderColor">#25C29447</Color>
+
+    <!-- Solid Color Brushes -->
+    <SolidColorBrush x:Key="EmeraldBrush" Color="{StaticResource EmeraldColor}" />
+    <SolidColorBrush x:Key="EmeraldSoftBrush" Color="{StaticResource EmeraldSoftColor}" />
+    <SolidColorBrush x:Key="BronzeBrush" Color="{StaticResource BronzeColor}" />
+    <SolidColorBrush x:Key="BronzeSoftBrush" Color="{StaticResource BronzeSoftColor}" />
+    <SolidColorBrush x:Key="GoldBrush" Color="{StaticResource GoldColor}" />
+    <SolidColorBrush x:Key="GoldSoftBrush" Color="{StaticResource GoldSoftColor}" />
+    <SolidColorBrush x:Key="CyanBlueBrush" Color="{StaticResource CyanBlueColor}" />
+    <SolidColorBrush x:Key="DeepNavyBrush" Color="{StaticResource DeepNavyColor}" />
+    <SolidColorBrush x:Key="CardBorderBrush" Color="{StaticResource CardBorderColor}" />
+
+    <!-- Gradient Brushes -->
+    <LinearGradientBrush x:Key="BannerGradientBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+        <GradientStop Color="#1F8AC9" Offset="0.0" />
+        <GradientStop Color="#145B96" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="SidebarGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+        <GradientStop Color="#0F172A" Offset="0.0" />
+        <GradientStop Color="#1E293B" Offset="1.0" />
+    </LinearGradientBrush>
+
+    <!-- Arabic Calligraphy Font Family -->
+    <FontFamily x:Key="ArabicCalligraphyFont">avares://Jadwal.UI/Assets#Kanz-al-Lulu, avares://Jadwal.UI/Assets/KanzalLulu-Regular.ttf#Kanz-al-Lulu, "Traditional Arabic", "Scheherazade New", Arial</FontFamily>
+
+</ResourceDictionary>

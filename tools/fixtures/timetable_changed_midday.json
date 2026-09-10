@@ -1,0 +1,53 @@
+{
+  "academicYear": "1447 / 1448",
+  "weekNumber": 25,
+  "startDate": "2026-09-07",
+  "endDate": "2026-09-13",
+  "entries": [
+    {
+      "day": "Monday",
+      "date": "2026-09-07",
+      "period": "(PT)",
+      "startTime": "06:00",
+      "endTime": "07:00",
+      "subject": "Physical Training",
+      "details": "خيمة الرياضة"
+    },
+    {
+      "day": "Monday",
+      "date": "2026-09-07",
+      "period": "Period 2",
+      "startTime": "08:50",
+      "endTime": "09:25",
+      "subject": "الرسالة الشريفة",
+      "details": "الشيخ ابراهيم بهائي"
+    },
+    {
+      "day": "Monday",
+      "date": "2026-09-07",
+      "period": "Period 3",
+      "startTime": "09:25",
+      "endTime": "10:00",
+      "subject": "كتاب تأويل الدعائم",
+      "details": "الشيخ الاقمر"
+    },
+    {
+      "day": "Monday",
+      "date": "2026-09-07",
+      "period": "Period 4",
+      "startTime": "10:05",
+      "endTime": "10:40",
+      "subject": "Economics",
+      "details": "قاعة المؤتمرات"
+    },
+    {
+      "day": "Monday",
+      "date": "2026-09-07",
+      "period": "Period 5",
+      "startTime": "10:55",
+      "endTime": "11:30",
+      "subject": "المجالس المؤيدية",
+      "details": "الشيخ مصطفى بهائي"
+    }
+  ]
+}

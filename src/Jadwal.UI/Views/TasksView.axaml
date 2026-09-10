@@ -1,0 +1,175 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             xmlns:models="using:Jadwal.Domain.Models"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="Jadwal.UI.Views.TasksView"
+             x:DataType="vm:TasksViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="18" Margin="24">
+
+            <!-- HEADER & ACTIONS BAR -->
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                <StackPanel Grid.Column="0" Spacing="2">
+                    <TextBlock Text="Tasks &amp; Homework" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
+                    <TextBlock Text="Manage academic deliverables and subject discrepancies" FontSize="12" Foreground="#718096" />
+                </StackPanel>
+
+                <!-- Status Filter Pills -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="16,0">
+                    <ItemsControl ItemsSource="{Binding StatusOptions}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="4" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding}"
+                                        Command="{Binding $parent[UserControl].((vm:TasksViewModel)DataContext).SetFilterStatusCommand}"
+                                        CommandParameter="{Binding}"
+                                        Padding="10,6" CornerRadius="8" FontSize="12" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- Add Task Button -->
+                <Button Grid.Column="3" Content="+ New Task"
+                        Command="{Binding ToggleAddTaskCommand}"
+                        Background="{DynamicResource EmeraldBrush}" Foreground="White"
+                        FontWeight="Bold" CornerRadius="10" Padding="14,8"
+                        VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- COLLAPSIBLE ADD TASK PANEL -->
+            <Border IsVisible="{Binding IsAddingTask}"
+                    Background="{DynamicResource SystemAltHighColor}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="18" BoxShadow="0 4 16 0 #15000000">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Add New Task" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource BronzeBrush}" />
+
+                    <TextBox Text="{Binding NewTaskTitle}" PlaceholderText="Task title (e.g. Prepare lesson summary)" />
+
+                    <Grid ColumnDefinitions="*,*,*">
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Subject" FontSize="11" Foreground="#718096" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding AvailableSubjects}"
+                                      SelectedItem="{Binding NewTaskSubject}"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="4,0,4,0">
+                            <TextBlock Text="Priority" FontSize="11" Foreground="#718096" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding PriorityOptions}"
+                                      SelectedItem="{Binding NewTaskPriority}"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="8,0,0,0">
+                            <TextBlock Text="Category" FontSize="11" Foreground="#718096" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding CategoryOptions}"
+                                      SelectedItem="{Binding NewTaskCategory}"
+                                      HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBox Text="{Binding NewTaskNotes}" PlaceholderText="Additional notes or references (optional)" AcceptsReturn="True" Height="60" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                        <Button Content="Cancel" Command="{Binding ToggleAddTaskCommand}" />
+                        <Button Content="Save Task" Command="{Binding CreateTaskCommand}"
+                                Background="{DynamicResource EmeraldBrush}" Foreground="White" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- SEARCH AND FILTER BAR -->
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" Text="{Binding SearchQuery}"
+                         PlaceholderText="Search tasks by title, subject or notes..."
+                         CornerRadius="8" Height="34" />
+                <TextBlock Grid.Column="1" Text="{Binding FilteredTasks.Count, StringFormat='{}{0} tasks'}"
+                           FontSize="12" Foreground="#718096" VerticalAlignment="Center" Margin="12,0,0,0" />
+            </Grid>
+
+            <!-- TASKS LIST -->
+            <ItemsControl ItemsSource="{Binding FilteredTasks}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="models:TaskItem">
+                        <Border Margin="0,4" Padding="14,10"
+                                Background="{DynamicResource SystemAltHighColor}"
+                                BorderBrush="{DynamicResource CardBorderBrush}"
+                                BorderThickness="1" CornerRadius="12"
+                                BoxShadow="0 2 6 0 #0A000000">
+                            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                                <!-- Completion Checkbox -->
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsCompleted}"
+                                          Command="{Binding $parent[UserControl].((vm:TasksViewModel)DataContext).ToggleTaskCompletionCommand}"
+                                          CommandParameter="{Binding}"
+                                          VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                                <!-- Title, Subject, Notes -->
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Title}"
+                                                   FontWeight="SemiBold" FontSize="13"
+                                                   VerticalAlignment="Center" />
+
+                                        <!-- Subject Badge -->
+                                        <Border IsVisible="{Binding LinkedSubject, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                                Background="{DynamicResource BronzeSoftBrush}"
+                                                CornerRadius="6" Padding="6,2">
+                                            <TextBlock Text="{Binding LinkedSubject}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       Foreground="{DynamicResource BronzeBrush}" />
+                                        </Border>
+                                    </StackPanel>
+
+                                    <!-- Notes -->
+                                    <TextBlock Text="{Binding Notes}"
+                                               IsVisible="{Binding Notes, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                               FontSize="11" Foreground="#718096" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <!-- Priority and Category -->
+                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="12,0">
+                                    <Border Background="#15C29447" CornerRadius="6" Padding="6,2">
+                                        <TextBlock Text="{Binding Priority}" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource BronzeBrush}" />
+                                    </Border>
+                                    <Border Background="#10147A5C" CornerRadius="6" Padding="6,2">
+                                        <TextBlock Text="{Binding Category}" FontSize="10" Foreground="{DynamicResource EmeraldBrush}" />
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Delete Button -->
+                                <Button Grid.Column="3" Content="🗑️"
+                                        Classes="flat" Padding="6"
+                                        Command="{Binding $parent[UserControl].((vm:TasksViewModel)DataContext).DeleteTaskCommand}"
+                                        CommandParameter="{Binding}"
+                                        VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Empty Tasks Notice -->
+            <Border IsVisible="{Binding !FilteredTasks.Count}"
+                    Background="#0A000000" CornerRadius="12"
+                    Padding="40" HorizontalAlignment="Center" Margin="0,20,0,0">
+                <StackPanel HorizontalAlignment="Center" Spacing="6">
+                    <TextBlock Text="✅" FontSize="32" HorizontalAlignment="Center" />
+                    <TextBlock Text="No tasks found matching current filters."
+                               FontWeight="SemiBold" FontSize="14" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

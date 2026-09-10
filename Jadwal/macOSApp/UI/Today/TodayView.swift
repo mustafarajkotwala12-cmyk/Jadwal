@@ -30,8 +30,12 @@ public struct TodayView: View {
         ScheduleTimelineBuilder.buildTimeline(from: todayPeriods, currentTime: currentTime)
     }
 
-    private var columnSplit: (morning: [ScheduleTimelineItem], afternoon: [ScheduleTimelineItem]) {
-        ScheduleTimelineBuilder.splitIntoTwoColumns(items: timelineItems)
+    private var scheduleRule: DayScheduleRule {
+        DayScheduleRule.rule(for: currentDayOfWeek)
+    }
+
+    private var rowSplit: (row1: [ScheduleTimelineItem], row2: [ScheduleTimelineItem]) {
+        ScheduleTimelineBuilder.splitIntoTwoHorizontalRows(items: timelineItems, day: currentDayOfWeek)
     }
 
     private var todayChanges: [TimetableChangeRecord] {
@@ -39,70 +43,81 @@ public struct TodayView: View {
     }
 
     public var body: some View {
-        GeometryReader { proxy in
-            ScrollView(.vertical, showsIndicators: proxy.size.height < 680) {
-                VStack(spacing: 12) {
-                    // Header Date & Time Rail
-                    DateTimeRailView(
-                        todayPeriods: todayPeriods,
-                        currentDayOfWeek: currentDayOfWeek
-                    )
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 16) {
+                // Freeform-inspired Date & Time Banner
+                TimetableDateBanner(
+                    dayOfWeek: currentDayOfWeek,
+                    date: currentTime,
+                    todayPeriods: todayPeriods,
+                    rule: scheduleRule
+                )
 
-                    // Schedule adjustments banner (if any active changes today)
-                    if !todayChanges.isEmpty {
-                        changesBanner
+                // Schedule adjustments banner (if any active changes today)
+                if !todayChanges.isEmpty {
+                    changesBanner
+                }
+
+                // Main Two Horizontal Rows
+                if todayPeriods.isEmpty {
+                    emptyDayView
+                } else {
+                    // Row 1: Morning Sessions & Breaks
+                    if !rowSplit.row1.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            rowHeader(
+                                title: scheduleRule.row1Title,
+                                icon: "sun.and.horizon.fill",
+                                color: FatimidPalette.emerald
+                            )
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(alignment: .top, spacing: 10) {
+                                    ForEach(rowSplit.row1) { item in
+                                        renderTimelineItem(item)
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 2)
+                            }
+                        }
                     }
 
-                    // Main Two-Column Class Timetable
-                    if todayPeriods.isEmpty {
-                        emptyDayView
-                    } else {
-                        HStack(alignment: .top, spacing: 14) {
-                            // Column 1: Morning Sessions
-                            VStack(alignment: .leading, spacing: 8) {
-                                columnHeader(
-                                    title: "Morning Sessions",
-                                    icon: "sun.and.horizon.fill",
-                                    color: FatimidPalette.emerald
-                                )
+                    // Row 2: Afternoon Sessions & Breaks
+                    if !rowSplit.row2.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            rowHeader(
+                                title: scheduleRule.row2Title,
+                                icon: "sun.max.fill",
+                                color: FatimidPalette.bronze
+                            )
 
-                                ForEach(columnSplit.morning) { item in
-                                    renderTimelineItem(item)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(alignment: .top, spacing: 10) {
+                                    ForEach(rowSplit.row2) { item in
+                                        renderTimelineItem(item)
+                                    }
                                 }
+                                .padding(.vertical, 4)
+                                .padding(.horizontal, 2)
                             }
-                            .frame(maxWidth: .infinity, alignment: .top)
-
-                            // Column 2: Afternoon Sessions
-                            VStack(alignment: .leading, spacing: 8) {
-                                columnHeader(
-                                    title: "Afternoon Sessions",
-                                    icon: "sun.max.fill",
-                                    color: FatimidPalette.bronze
-                                )
-
-                                ForEach(columnSplit.afternoon) { item in
-                                    renderTimelineItem(item)
-                                }
-                            }
-                            .frame(maxWidth: .infinity, alignment: .top)
                         }
                     }
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 14)
-                .frame(minHeight: proxy.size.height, alignment: .top)
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
         }
         .onReceive(liveTicker) { date in
             currentTime = date
         }
     }
 
-    // MARK: - Column Header
-    private func columnHeader(title: String, icon: String, color: Color) -> some View {
+    // MARK: - Row Header
+    private func rowHeader(title: String, icon: String, color: Color) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 11, weight: .bold))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(color)
 
             Text(title.uppercased())
@@ -112,8 +127,7 @@ public struct TodayView: View {
 
             Spacer()
         }
-        .padding(.horizontal, 4)
-        .padding(.top, 2)
+        .padding(.horizontal, 2)
     }
 
     // MARK: - Timeline Item Renderer
@@ -122,13 +136,15 @@ public struct TodayView: View {
         switch item {
         case .classPeriod(let period, let status):
             ClassCardView(period: period, status: status)
+                .frame(width: 175, height: 215)
         case .breakBlock(_, let name, let startTime, let endTime, let durationMinutes):
-            BreakCardView(
+            VerticalBreakPillView(
                 name: name,
                 startTime: startTime,
                 endTime: endTime,
                 durationMinutes: durationMinutes
             )
+            .frame(width: 54, height: 215)
         }
     }
 
@@ -160,13 +176,13 @@ public struct TodayView: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 10)
                 .fill(Color.orange.opacity(0.1))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 10)
                         .stroke(Color.orange.opacity(0.3), lineWidth: 1)
                 )
         )

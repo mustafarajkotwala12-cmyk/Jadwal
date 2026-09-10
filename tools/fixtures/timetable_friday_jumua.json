@@ -1,0 +1,89 @@
+{
+  "academicYear": "1447 / 1448",
+  "weekNumber": 25,
+  "startDate": "2026-09-11",
+  "endDate": "2026-09-11",
+  "entries": [
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 2",
+      "startTime": "08:50",
+      "endTime": "09:25",
+      "subject": "الرسالة الشريفة",
+      "details": "الشيخ ابراهيم بهائي"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 3",
+      "startTime": "09:25",
+      "endTime": "10:00",
+      "subject": "كتاب تأويل الدعائم",
+      "details": "الشيخ الاقمر"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 4",
+      "startTime": "10:00",
+      "endTime": "10:35",
+      "subject": "Linguistics",
+      "details": "الشيخ يوسف بهائي"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 5",
+      "startTime": "10:55",
+      "endTime": "11:30",
+      "subject": "المجالس المؤيدية",
+      "details": "الشيخ مصطفى بهائي"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 6",
+      "startTime": "11:30",
+      "endTime": "12:05",
+      "subject": "كتاب الينبوع",
+      "details": "الشيخ عدنان"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 7",
+      "startTime": "12:05",
+      "endTime": "12:40",
+      "subject": "رسائل اخوان الصفاء",
+      "details": "الشيخ فخر الدين"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 8",
+      "startTime": "14:00",
+      "endTime": "14:35",
+      "subject": "نهج البلاغة",
+      "details": "الشيخ عبد القادر"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 9",
+      "startTime": "14:35",
+      "endTime": "15:10",
+      "subject": "كتاب عيون الاخبار",
+      "details": "الشيخ فخر الدين"
+    },
+    {
+      "day": "Friday",
+      "date": "2026-09-11",
+      "period": "Period 10",
+      "startTime": "15:10",
+      "endTime": "15:45",
+      "subject": "المؤدب",
+      "details": "مكتب المرحلة"
+    }
+  ]
+}

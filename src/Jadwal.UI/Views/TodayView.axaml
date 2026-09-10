@@ -1,0 +1,141 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             xmlns:ctrl="using:Jadwal.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="Jadwal.UI.Views.TodayView"
+             x:DataType="vm:TodayViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="20" Margin="24">
+
+            <!-- HERO BANNER: DATE & TIME (FREEFORM TOP SECTION) -->
+            <Border CornerRadius="18"
+                    Background="{DynamicResource BannerGradientBrush}"
+                    Padding="24,20"
+                    BoxShadow="0 8 24 0 #20145B96">
+                <Grid ColumnDefinitions="*,Auto">
+                    <!-- Left: Arabic Weekday, English Date, Subtitle -->
+                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ArabicWeekday}"
+                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                   FontSize="32" FontWeight="Bold"
+                                   Foreground="White" />
+                        <TextBlock Text="{Binding EnglishDate}"
+                                   FontSize="15" FontWeight="SemiBold"
+                                   Foreground="#E2E8F0" />
+                        <TextBlock Text="{Binding DaySubtitle}"
+                                   FontSize="12" Foreground="#CBD5E1"
+                                   Margin="0,2,0,0" />
+                    </StackPanel>
+
+                    <!-- Right: Digital Clock & Status Pill -->
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="8">
+                        <Border Background="#25FFFFFF" CornerRadius="10" Padding="12,6" HorizontalAlignment="Right">
+                            <TextBlock Text="{Binding CurrentTimeString}"
+                                       FontFamily="Courier New, monospace"
+                                       FontSize="16" FontWeight="Bold"
+                                       Foreground="White" />
+                        </Border>
+                        <Border Background="{DynamicResource EmeraldBrush}" CornerRadius="12" Padding="12,6">
+                            <TextBlock Text="{Binding ActiveStatusDescription}"
+                                       FontSize="12" FontWeight="SemiBold"
+                                       Foreground="White" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- CHANGES ALERT BANNER (SHOWN WHEN SCHEDULE HAS DISCREPANCIES) -->
+            <Border IsVisible="{Binding HasChanges}"
+                    Background="#FFFBEB"
+                    BorderBrush="#F59E0B"
+                    BorderThickness="1.5"
+                    CornerRadius="12"
+                    Padding="16,12">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Column="0" Text="⚠️" FontSize="20" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="Timetable Changes Detected" FontWeight="Bold" FontSize="13" Foreground="#92400E" />
+                        <TextBlock Text="{Binding ChangesSummary}" FontSize="12" Foreground="#B45309" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="2" Content="Acknowledge"
+                            Command="{Binding AcknowledgeChangesCommand}"
+                            Background="#F59E0B" Foreground="White"
+                            FontWeight="SemiBold" CornerRadius="8"
+                            Padding="12,6" VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+
+            <!-- ROW 1: MORNING SESSIONS (FREEFORM HORIZONTAL ROW 1) -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Row1Title}"
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource BronzeBrush}"
+                           Margin="4,0,0,0" />
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Row1Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.DataTemplates>
+                            <DataTemplate DataType="vm:ClassCardItemViewModel">
+                                <ctrl:ClassCardControl />
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:BreakPillItemViewModel">
+                                <ctrl:VerticalBreakPillControl />
+                            </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- ROW 2: AFTERNOON SESSIONS (FREEFORM HORIZONTAL ROW 2) -->
+            <StackPanel Spacing="10" IsVisible="{Binding !IsEmptyDay}">
+                <TextBlock Text="{Binding Row2Title}"
+                           FontSize="15" FontWeight="Bold"
+                           Foreground="{DynamicResource BronzeBrush}"
+                           Margin="4,0,0,0" />
+
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Row2Items}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.DataTemplates>
+                            <DataTemplate DataType="vm:ClassCardItemViewModel">
+                                <ctrl:ClassCardControl />
+                            </DataTemplate>
+                            <DataTemplate DataType="vm:BreakPillItemViewModel">
+                                <ctrl:VerticalBreakPillControl />
+                            </DataTemplate>
+                        </ItemsControl.DataTemplates>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+
+            <!-- EMPTY STATE NOTICE -->
+            <Border IsVisible="{Binding IsEmptyDay}"
+                    Background="#0A000000" CornerRadius="12"
+                    Padding="40" HorizontalAlignment="Center" Margin="0,40,0,0">
+                <StackPanel HorizontalAlignment="Center" Spacing="8">
+                    <TextBlock Text="📅" FontSize="36" HorizontalAlignment="Center" />
+                    <TextBlock Text="No classes scheduled for today."
+                               FontWeight="SemiBold" FontSize="16"
+                               HorizontalAlignment="Center" />
+                    <TextBlock Text="Sync with Jamia Portal in Settings to load your schedule."
+                               FontSize="12" Foreground="#718096"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="100" d:DesignHeight="160"
+             x:Class="Jadwal.UI.Controls.VerticalBreakPillControl"
+             x:DataType="vm:BreakPillItemViewModel">
+
+    <Border Width="95" Height="155"
+            CornerRadius="14"
+            BorderThickness="1"
+            BorderBrush="{DynamicResource GoldSoftBrush}"
+            Background="#08C29447"
+            BoxShadow="0 2 8 0 #0D000000"
+            Margin="4">
+        <Grid RowDefinitions="Auto,*,Auto,Auto" Margin="8" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <!-- Icon -->
+            <TextBlock Grid.Row="0" Text="☕" FontSize="18"
+                       HorizontalAlignment="Center" Margin="0,0,0,4" />
+
+            <!-- Stacked Name -->
+            <TextBlock Grid.Row="1"
+                       Text="{Binding ShortName}"
+                       FontSize="11" FontWeight="SemiBold"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource BronzeBrush}"
+                       HorizontalAlignment="Center" />
+
+            <!-- Duration Pill -->
+            <Border Grid.Row="2"
+                    CornerRadius="8" Padding="6,2"
+                    Background="{DynamicResource GoldSoftBrush}"
+                    HorizontalAlignment="Center" Margin="0,6,0,6">
+                <TextBlock Text="{Binding DurationFormatted}"
+                           FontSize="10" FontWeight="Bold"
+                           Foreground="{DynamicResource BronzeBrush}" />
+            </Border>
+
+            <!-- Time Range -->
+            <TextBlock Grid.Row="3"
+                       Text="{Binding Break.StartTime, StringFormat='{}{0} -'}"
+                       FontSize="9" Foreground="#A0AEC0"
+                       TextAlignment="Center" />
+        </Grid>
+    </Border>
+</UserControl>

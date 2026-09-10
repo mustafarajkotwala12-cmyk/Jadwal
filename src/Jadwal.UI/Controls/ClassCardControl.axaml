@@ -1,0 +1,116 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="160"
+             x:Class="Jadwal.UI.Controls.ClassCardControl"
+             x:DataType="vm:ClassCardItemViewModel">
+
+    <Border Width="210" Height="155"
+            CornerRadius="14"
+            BorderThickness="1.5"
+            BorderBrush="{DynamicResource CardBorderBrush}"
+            Background="{DynamicResource SystemAltHighColor}"
+            BoxShadow="0 4 12 0 #15000000"
+            Margin="6">
+        <Panel>
+            <!-- FRONT FACE: CLASS DETAILS -->
+            <Grid RowDefinitions="Auto,*,Auto" Margin="12" IsVisible="{Binding !IsFlipped}">
+                <!-- Top Row: Period, Time, Status Badge -->
+                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
+                        <Border Background="{DynamicResource BronzeSoftBrush}"
+                                CornerRadius="6" Padding="6,2">
+                            <TextBlock Text="{Binding Period.PeriodName}"
+                                       FontSize="11" FontWeight="Bold"
+                                       Foreground="{DynamicResource BronzeBrush}" />
+                        </Border>
+                        <TextBlock Text="{Binding Period.StartTime}"
+                                   FontSize="11" Foreground="#718096"
+                                   VerticalAlignment="Center" Margin="4,0,0,0" />
+                    </StackPanel>
+
+                    <!-- Live Status Pill -->
+                    <Border Grid.Column="2"
+                            CornerRadius="10" Padding="8,2"
+                            Background="{DynamicResource EmeraldSoftBrush}">
+                        <TextBlock Text="{Binding StatusText}"
+                                   FontSize="9" FontWeight="Bold"
+                                   Foreground="{DynamicResource EmeraldBrush}" />
+                    </Border>
+                </Grid>
+
+                <!-- Middle: Arabic Subject in Kanz-al-Lulu -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,6,0,6">
+                    <TextBlock Text="{Binding Period.Subject}"
+                               FontFamily="{StaticResource ArabicCalligraphyFont}"
+                               FontSize="24" FontWeight="SemiBold"
+                               TextAlignment="Center"
+                               TextWrapping="NoWrap"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource SystemBaseHighColor}" />
+                    <TextBlock Text="{Binding Period.Details}"
+                               FontSize="11" Foreground="#718096"
+                               TextAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,2,0,0" />
+                </StackPanel>
+
+                <!-- Bottom Row: Time End & Tasks Flip Button -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Period.EndTime, StringFormat='Ends {0}'}"
+                               FontSize="10" Foreground="#A0AEC0"
+                               VerticalAlignment="Center" />
+
+                    <Button Grid.Column="1"
+                            Classes="flat"
+                            Padding="6,2"
+                            CornerRadius="8"
+                            Background="#10C29447"
+                            Click="OnFlipClicked">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="📋" FontSize="10" />
+                            <TextBlock Text="{Binding Tasks.Count, StringFormat='{}{0} tasks'}"
+                                       FontSize="10" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BronzeBrush}" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Grid>
+
+            <!-- BACK FACE: TASKS FOR THIS PERIOD -->
+            <Grid Grid.Row="0" RowDefinitions="Auto,*,Auto" Margin="12" IsVisible="{Binding IsFlipped}">
+                <!-- Header -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" Text="{Binding Period.Subject, StringFormat='Tasks • {0}'}"
+                               FontWeight="Bold" FontSize="12"
+                               Foreground="{DynamicResource BronzeBrush}"
+                               VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Content="✕"
+                            Padding="4,2" FontSize="10"
+                            Click="OnFlipClicked" />
+                </Grid>
+
+                <!-- Task List -->
+                <ScrollViewer Grid.Row="1" Margin="0,6">
+                    <ItemsControl ItemsSource="{Binding Tasks}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,2" Padding="4,2" Background="#0A000000" CornerRadius="4">
+                                    <TextBlock Text="{Binding Title}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <!-- Footer note -->
+                <TextBlock Grid.Row="2" Text="Click ✕ to flip back"
+                           FontSize="9" Foreground="#A0AEC0"
+                           HorizontalAlignment="Center" />
+            </Grid>
+        </Panel>
+    </Border>
+</UserControl>

@@ -1,0 +1,93 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Jadwal.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="Jadwal.UI.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Spacing="20" Margin="24" MaxWidth="700" HorizontalAlignment="Left">
+
+            <!-- HEADER -->
+            <StackPanel Spacing="2">
+                <TextBlock Text="Settings &amp; Integration" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource BronzeBrush}" />
+                <TextBlock Text="Configure portal credentials, sync, and system settings" FontSize="12" Foreground="#718096" />
+            </StackPanel>
+
+            <!-- STATUS BANNER -->
+            <Border IsVisible="{Binding StatusMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                    Background="{DynamicResource GoldSoftBrush}"
+                    BorderBrush="{DynamicResource GoldBrush}"
+                    BorderThickness="1" CornerRadius="10" Padding="14,10">
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource DeepNavyBrush}" />
+            </Border>
+
+            <!-- CARD 1: ITS CREDENTIALS & SYNC -->
+            <Border Background="{DynamicResource SystemAltHighColor}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="20" BoxShadow="0 4 12 0 #10000000">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="ITS Portal Credentials" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
+                    <TextBlock Text="Your credentials are encrypted using native OS security (Keychain on macOS, DPAPI on Windows)."
+                               FontSize="11" Foreground="#718096" TextWrapping="Wrap" />
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="ITS ID" FontSize="12" FontWeight="SemiBold" />
+                        <TextBox Text="{Binding ItsId}" PlaceholderText="e.g. 30300000" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Password" FontSize="12" FontWeight="SemiBold" />
+                        <TextBox Text="{Binding Password}" PasswordChar="●" PlaceholderText="Enter your ITS password" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,6,0,0">
+                        <Button Content="Save Credentials"
+                                Command="{Binding SaveCredentialsCommand}"
+                                Padding="14,8" CornerRadius="8" FontWeight="SemiBold" />
+
+                        <Button Content="🔄 Sync Jamia Timetable"
+                                Command="{Binding SyncJamiaScheduleCommand}"
+                                IsEnabled="{Binding !IsBusy}"
+                                Background="{DynamicResource EmeraldBrush}" Foreground="White"
+                                Padding="16,8" CornerRadius="8" FontWeight="Bold" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- CARD 2: LEGACY DATA MIGRATION -->
+            <Border Background="{DynamicResource SystemAltHighColor}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="20" BoxShadow="0 4 12 0 #10000000">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Legacy Data Migration" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
+                    <TextBlock Text="Import tasks, timetable snapshots, and changes from previous Swift / Python versions of JameaHelper / Jadwal. Automated backups are created before migration."
+                               FontSize="11" Foreground="#718096" TextWrapping="Wrap" />
+
+                    <Button Content="📦 Import from Legacy Stores"
+                            Command="{Binding RunLegacyMigrationCommand}"
+                            IsEnabled="{Binding !IsBusy}"
+                            Padding="16,8" CornerRadius="8" FontWeight="SemiBold" />
+
+                    <TextBlock Text="{Binding MigrationReport}"
+                               IsVisible="{Binding MigrationReport, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                               FontSize="12" Foreground="{DynamicResource EmeraldBrush}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <!-- CARD 3: APP INFO -->
+            <Border Background="#08000000" CornerRadius="14" Padding="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Jadwal (جدول) — Academic Timetable &amp; Schedule Companion" FontWeight="SemiBold" FontSize="12" />
+                    <TextBlock Text="Version 2.0.0 (.NET 10 LTS • Avalonia UI 12 • Cross-Platform Engine)" FontSize="11" Foreground="#718096" />
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Jadwal.App/Jadwal.App.csproj" />
+    <Project Path="src/Jadwal.Application/Jadwal.Application.csproj" />
+    <Project Path="src/Jadwal.Domain/Jadwal.Domain.csproj" />
+    <Project Path="src/Jadwal.Infrastructure/Jadwal.Infrastructure.csproj" />
+    <Project Path="src/Jadwal.Integrations.Jamia/Jadwal.Integrations.Jamia.csproj" />
+    <Project Path="src/Jadwal.Platform.MacOS/Jadwal.Platform.MacOS.csproj" />
+    <Project Path="src/Jadwal.Platform.Windows/Jadwal.Platform.Windows.csproj" />
+    <Project Path="src/Jadwal.UI/Jadwal.UI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Jadwal.Application.Tests/Jadwal.Application.Tests.csproj" />
+    <Project Path="tests/Jadwal.Domain.Tests/Jadwal.Domain.Tests.csproj" />
+    <Project Path="tests/Jadwal.Infrastructure.Tests/Jadwal.Infrastructure.Tests.csproj" />
+    <Project Path="tests/Jadwal.Integrations.Jamia.Tests/Jadwal.Integrations.Jamia.Tests.csproj" />
+    <Project Path="tests/Jadwal.UI.Tests/Jadwal.UI.Tests.csproj" />
+  </Folder>
+</Solution>
