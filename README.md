@@ -83,26 +83,27 @@ Jadwal is built with **.NET 10** and **Avalonia UI 12**, following Clean Archite
 JameaHelper/
 ├── src/
 │   ├── Jadwal.Domain/           # Entities, Value Objects (FatimidHijriDate, ScheduleTimeline, Task, Timetable)
-│   ├── Jadwal.Application/      # DTOs, Services (CalendarService, TaskService, TimetableService, DashboardService)
+│   ├── Jadwal.Application/      # DTOs, Contracts (IJamiaAuthenticationService, IJamiaCredentialStore, etc.)
 │   ├── Jadwal.Infrastructure/   # JSON Repositories, Embedded Miqaats Data, Data Migration
-│   ├── Jadwal.Integrations.Jamia/# Playwright Python bridge, Token storage, Excel parser
+│   ├── Jadwal.Integrations.Jamia/# Native Microsoft.Playwright auth, Token storage, Direct HTTPS client, Excel parser
 │   ├── Jadwal.Platform.MacOS/   # macOS Keychain secure storage, notifications, LaunchAgent startup
 │   ├── Jadwal.Platform.Windows/ # Windows DPAPI storage, toast notifications, Registry startup
 │   ├── Jadwal.UI/               # Avalonia MVVM Views, ViewModels, Fatimid theme tokens, Kanzallulu font
 │   └── Jadwal.App/              # Application entry point, DI configuration, native launcher
-├── tests/                       # 5 comprehensive test projects (76 unit & integration tests)
+├── tests/                       # 5 comprehensive test projects (85 unit & integration tests)
 ├── dist/                        # Packaged macOS (.app, .zip) and Windows (win-x64) release bundles
 ├── Data/                        # Official miqaats.json dataset
 ├── assets/                      # Official application icons (PNG & ICNS)
-├── helper/                      # Python Playwright automation script (jamea_helper.py)
+├── tools/legacy/                # Preserved legacy migration references
 ├── backups/                     # Preserved legacy archives
-├── Jadwal.sln                   # Visual Studio / dotnet solution
-└── setup.sh                     # Python and Playwright browser dependency installer
+└── Jadwal.sln                   # Visual Studio / dotnet solution
 ```
 
 ---
 
 ## 🚀 Quick Start for Users
+
+> 💡 **No Python required!** Jadwal runs completely on native .NET with embedded Playwright browser automation.
 
 ### macOS
 1. Download **`Jadwal-v4.0.0-macos-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
@@ -113,8 +114,7 @@ JameaHelper/
 ### Windows
 1. Download **`Jadwal-v4.0.0-windows-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
 2. Extract the archive.
-3. Run **`setup.bat`** once to install Python dependencies.
-4. Launch **`Jadwal.App.exe`**.
+3. Launch **`Jadwal.App.exe`**.
 
 ---
 
@@ -122,19 +122,8 @@ JameaHelper/
 
 ### Prerequisites
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- Python 3.10+ (for timetable synchronization)
 
-### 1. Install Python Dependencies
-```bash
-./setup.sh
-```
-*Or manually:*
-```bash
-python3 -m pip install -r requirements.txt
-python3 -m playwright install chromium
-```
-
-### 2. Build and Run Tests
+### 1. Build and Run Tests
 ```bash
 dotnet test Jadwal.sln -c Release
 ```

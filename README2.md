@@ -1,6 +1,8 @@
 # 📖 Jadwal (جدول) — Easy Download & Setup Guide
 
-Welcome to **Jadwal (جدول)**! This step-by-step guide will walk you through downloading, installing, and setting up Jadwal on **Windows** and **macOS** as easily as possible.
+Welcome to **Jadwal (جدول)**! This step-by-step guide will walk you through downloading, installing, and setting up Jadwal on **Windows** and **macOS**.
+
+> 🚀 **No Python Required!** Starting with version 4.0.0, Jadwal features a 100% native .NET sync engine. You do **not** need to install Python, pip, or run command-line setup scripts.
 
 ---
 
@@ -13,21 +15,9 @@ Welcome to **Jadwal (جدول)**! This step-by-step guide will walk you through 
 
 ## 🪟 Windows Installation Guide
 
-Follow these 4 simple steps to get Jadwal running on Windows 10 or Windows 11:
+Follow these 2 simple steps to get Jadwal running on Windows 10 or Windows 11:
 
-### Step 1: Install Python 3 (One-Time Requirement)
-Jadwal uses Python to securely communicate with the Jamia portal and sync your timetable.
-
-1. Go to the official Python website: **[python.org/downloads](https://www.python.org/downloads/)**
-2. Click the yellow button: **"Download Python 3.x.x"**.
-3. Open the downloaded installer file.
-4. ⚠️ **CRITICAL STEP**: At the bottom of the installer window, check the box that says:
-   > ☑️ **"Add python.exe to PATH"** (or **"Add Python to environment variables"**)
-5. Click **"Install Now"** and wait for it to complete.
-
----
-
-### Step 2: Download the Jadwal Windows App
+### Step 1: Download the Jadwal Windows App
 1. Go to the **[Jadwal GitHub Releases page](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases)**.
 2. Under the latest release (v4.0.0), download:
    - 📦 **`Jadwal-v4.0.0-windows-x64.zip`**
@@ -35,47 +25,21 @@ Jadwal uses Python to securely communicate with the Jamia portal and sync your t
 
 ---
 
-### Step 3: Run the Setup File
-Inside the extracted folder, you will see a file named `setup.bat`:
-
-1. Double-click **`setup.bat`**.
-2. A black terminal window will open and automatically install all needed tools (Playwright, Pandas, OpenPyXL, and browser components).
-3. When it finishes and says *"Setup completed successfully!"*, press any key to close the window.
-
-> 💡 *Note: You only ever need to run `setup.bat` once.*
-
----
-
-### Step 4: Open Jadwal!
-1. Double-click **`Jadwal.App.exe`** to open the app.
-2. Navigate to **⚙️ Settings**:
+### Step 2: Open Jadwal!
+1. Open the extracted folder and double-click **`Jadwal.App.exe`** to launch the app.
+2. Navigate to **⚙️ Settings** on the left menu:
    - Enter your **ITS ID** and **Password** under *Jamia Portal Authentication*.
    - Click **Save Credentials**.
    - Click **Sync Jamia Timetable**.
-3. A browser window will appear. If prompted, complete your ITS sign-in. Jadwal will automatically capture your schedule and display it on your dashboard!
-
----
+3. A browser window will appear to authenticate with the Jamia portal. If prompted, complete your ITS sign-in. Jadwal will automatically capture your schedule, save it securely, and display it on your dashboard!
 
 ---
 
 ## 🍏 macOS Installation Guide
 
-Follow these simple steps to install Jadwal on your Mac (macOS Monterey, Ventura, Sonoma, Sequoia):
+Follow these 2 simple steps to install Jadwal on your Mac (macOS Monterey, Ventura, Sonoma, Sequoia):
 
-### Step 1: Verify Python 3
-Macs often have Python pre-installed, or you can install it in 30 seconds:
-
-1. Open **Terminal** (press `Cmd + Space`, type `Terminal`, and press `Enter`).
-2. Type the following and press `Enter`:
-   ```bash
-   python3 --version
-   ```
-3. If Python is installed, it will print something like `Python 3.12.x`.
-4. If you don't have Python or are prompted to install Developer Tools, you can easily download the official Mac installer from **[python.org/downloads/macos](https://www.python.org/downloads/macos/)** (choose the *"macOS 64-bit universal2 installer"*).
-
----
-
-### Step 2: Download Jadwal for Mac
+### Step 1: Download Jadwal for Mac
 1. Go to the **[Jadwal GitHub Releases page](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases)**.
 2. Under the latest release (v4.0.0), download:
    - 📦 **`Jadwal-v4.0.0-macos-x64.zip`**
@@ -84,17 +48,7 @@ Macs often have Python pre-installed, or you can install it in 30 seconds:
 
 ---
 
-### Step 3: Run the Dependencies Setup (One-Time)
-1. Open **Terminal**.
-2. Run this command to install the portal sync engine:
-   ```bash
-   pip3 install --upgrade pip && pip3 install playwright pandas openpyxl && python3 -m playwright install chromium
-   ```
-3. Wait for the terminal to display that the installation succeeded.
-
----
-
-### Step 4: Launch Jadwal
+### Step 2: Launch Jadwal
 1. Open your **Applications** folder and look for **Jadwal**.
 2. ⚠️ **First Time Launch on macOS (Gatekeeper)**:
    - **Right-click** (or `Control + Click`) on **Jadwal.app**.
@@ -105,26 +59,23 @@ Macs often have Python pre-installed, or you can install it in 30 seconds:
    - Enter your **ITS ID** and **Password**.
    - Click **Save Credentials**.
    - Click **Sync Jamia Timetable**.
-4. Log into ITS in the browser window that opens. Jadwal will download your schedule and set up your daily dashboard!
-
----
+4. Sign in through the browser window that opens. Jadwal will capture your schedule and set up your daily dashboard!
 
 ---
 
 ## ❓ Troubleshooting & FAQ
 
-### 1. "Python was not recognized / not detected" (Windows)
-- **Cause**: You may have installed Python without ticking the *"Add python.exe to PATH"* checkbox.
-- **Solution**: Re-run the Python installer from [python.org](https://www.python.org/downloads/), choose **Modify**, make sure **"Add to PATH"** is checked, and click Next. Then run `setup.bat` again.
+### 1. "Do I need Python installed?"
+- **No!** Jadwal runs completely on native .NET with embedded browser automation. No Python runtime, pip packages, or virtual environments are needed.
 
 ### 2. "App cannot be opened because it is from an unidentified developer" (macOS)
 - **Solution**: Do not double-click. Instead, **Right-click** (or `Control + Click`) the `Jadwal.app` icon, click **Open**, and then click **Open** in the confirmation popup.
 
 ### 3. "Browser closed before login completed"
-- **Solution**: When clicking *Sync Jamia Timetable*, a browser window will launch. Please do not close this window manually. Allow the page to load, sign in with your ITS credentials, and let the window finish syncing by itself.
+- **Solution**: When clicking *Sync Jamia Timetable*, a browser window will launch. Please do not close this window manually. Allow the page to load, sign in with your ITS credentials, and let the window finish syncing by itself. Once sync succeeds, the window closes automatically.
 
 ### 4. How often does Jadwal refresh my timetable?
-- Jadwal includes an **Auto-Sync** feature that silently checks the Jamia portal every **4 minutes** (configurable from 3 to 10 minutes in Settings). Any room changes, substitutions, or period modifications will update on your screen automatically.
+- Jadwal includes an **Auto-Sync** feature that silently checks the Jamia portal every **4 minutes** (configurable from 3 to 10 minutes in Settings). Any room changes, substitutions, or period modifications will update on your screen automatically without opening a browser window as long as your session remains valid!
 
 ### 5. Can I use Jadwal offline?
 - **Yes!** Once your timetable is synced, it is saved securely on your local computer (`%APPDATA%\Jadwal` on Windows, `~/Library/Application Support/Jadwal` on macOS). You can view your classes, tasks, and the Fatimid Hijri calendar even without an internet connection.

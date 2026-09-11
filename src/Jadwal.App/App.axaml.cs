@@ -7,6 +7,7 @@ using Jadwal.Application.Services;
 using Jadwal.Infrastructure.Migration;
 using Jadwal.Infrastructure.Persistence;
 using Jadwal.Integrations.Jamia;
+using Jadwal.Integrations.Jamia.Services;
 using Jadwal.Platform.MacOS.Services;
 using Jadwal.Platform.Windows.Services;
 using Jadwal.UI.ViewModels;
@@ -74,6 +75,10 @@ public partial class App : Avalonia.Application
         }
 
         // Integration & Migration
+        services.AddSingleton<IJamiaCredentialStore, JamiaCredentialStore>();
+        services.AddSingleton<IJamiaInteractiveAuthenticator, PlaywrightJamiaAuthenticator>();
+        services.AddSingleton<IJamiaAuthenticationService, JamiaAuthenticationService>();
+        services.AddSingleton<IJamiaCredentialProvider, JamiaCredentialProvider>();
         services.AddSingleton<IJamiaTimetableProvider, JamiaTimetableProvider>();
         services.AddSingleton<ILegacyMigrationService, LegacyDataMigrator>();
 

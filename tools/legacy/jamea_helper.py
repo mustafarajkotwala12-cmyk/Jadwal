@@ -1,3 +1,9 @@
+# ==============================================================================
+# LEGACY ARCHIVE - NON-PRODUCTION REFERENCE ONLY
+# This Python helper has been migrated to native C# / .NET using Microsoft.Playwright.
+# Jadwal production runtime does NOT invoke or depend on this file.
+# ==============================================================================
+
 import asyncio
 import base64
 from datetime import datetime, timedelta
