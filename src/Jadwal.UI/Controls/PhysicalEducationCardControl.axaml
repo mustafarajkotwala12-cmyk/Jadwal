@@ -64,22 +64,17 @@
                                FontSize="9" Foreground="{DynamicResource TextMutedBrush}"
                                VerticalAlignment="Center" />
 
-                    <!-- Tasks Flip Button -->
+                    <!-- Subtle details flip button — no pill badge -->
                     <Button Grid.Column="1"
+                            Classes="flat"
                             Click="OnFlipClicked"
                             Background="Transparent" BorderThickness="0"
                             Padding="4,2" CornerRadius="6"
-                            ToolTip.Tip="View / Add tasks">
-                        <Border Background="{DynamicResource GoldSoftBrush}"
-                                CornerRadius="6" Padding="6,2">
-                            <StackPanel Orientation="Horizontal" Spacing="4">
-                                <TextBlock Text="📝" FontSize="9" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding Tasks.Count, StringFormat='{}{0}'}"
-                                           FontSize="9" FontWeight="Bold"
-                                           Foreground="{DynamicResource BronzeBrush}"
-                                           VerticalAlignment="Center" />
-                            </StackPanel>
-                        </Border>
+                            ToolTip.Tip="View details">
+                        <TextBlock Text="ℹ"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center" />
                     </Button>
                 </Grid>
             </Grid>

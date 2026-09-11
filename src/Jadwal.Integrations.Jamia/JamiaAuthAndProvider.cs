@@ -444,13 +444,8 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         }
         catch { }
 
-        // Import the newly generated snapshot
-        var freshFileCandidates = new[]
-        {
-            Path.Combine(workingDir, "data", "timetable.json"),
-            Path.Combine(workingDir, "Data", "timetable.json"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
-        }.Concat(candidateDataPaths);
+        // Import the newly generated snapshot from app data locations
+        var freshFileCandidates = candidateDataPaths;
 
         foreach (var path in freshFileCandidates)
         {

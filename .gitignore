@@ -26,10 +26,11 @@ venv/
 .venv/
 
 # Jamea Helper Sensitive Credentials & Cache
-data/jamea_token.json
-data/browser-profile/
-data/TimeTable_*.xlsx
-data/timetable_raw.json
+[Dd]ata/jamea_token.json
+[Dd]ata/browser-profile/
+[Dd]ata/TimeTable_*.xlsx
+[Dd]ata/timetable_raw.json
+[Dd]ata/timetable.json
 
 # IDEs
 .idea/
