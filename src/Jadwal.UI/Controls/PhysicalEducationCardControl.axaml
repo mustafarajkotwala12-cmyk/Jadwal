@@ -8,16 +8,17 @@
              x:Class="Jadwal.UI.Controls.PhysicalEducationCardControl"
              x:DataType="vm:ClassCardItemViewModel">
 
+    <!-- Status glow matching ClassCardControl design -->
     <Border Height="165"
             CornerRadius="14"
-            BorderThickness="1.5"
-            BorderBrush="{DynamicResource CardBorderBrush}"
-            Background="{DynamicResource CardBackgroundBrush}"
+            BorderThickness="2"
+            BorderBrush="{Binding StatusBorderBrush}"
+            Background="{Binding StatusCardBackground}"
             BoxShadow="0 4 14 0 #12000000"
             Margin="4">
         <Border.Transitions>
             <Transitions>
-                <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                <BrushTransition Property="Background"  Duration="0:0:0.25" Easing="CubicEaseOut" />
                 <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
             </Transitions>
         </Border.Transitions>
@@ -25,21 +26,20 @@
         <Panel>
             <!-- FRONT FACE: PHYSICAL EDUCATION COMPACT VIEW -->
             <Grid RowDefinitions="Auto,*,Auto" Margin="10,8" IsVisible="{Binding !IsFlipped}">
-                <!-- Top Header: (PT) Badge & Live Status -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
-                    <Border Grid.Column="0" Background="{DynamicResource BronzeSoftBrush}"
-                            CornerRadius="6" Padding="5,2">
-                        <TextBlock Text="PT" FontSize="10" FontWeight="Bold"
-                                   Foreground="{DynamicResource BronzeBrush}" />
-                    </Border>
-                    <Border Grid.Column="2" CornerRadius="8" Padding="6,2"
-                            Background="{Binding StatusBadgeBackground}"
-                            BorderBrush="{Binding StatusBadgeBorder}"
-                            BorderThickness="1">
-                        <TextBlock Text="{Binding StatusText}" FontSize="8" FontWeight="Bold"
-                                   Foreground="{Binding StatusBadgeForeground}" />
-                    </Border>
-                </Grid>
+                <!-- Top: PT label + time — plain, no pills -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="PT"
+                               FontSize="10" FontWeight="Bold"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="·" FontSize="10"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding StartTime12H}"
+                               FontSize="10"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
 
                 <!-- Center Content: Icon + Physical Education + Arabic Details -->
                 <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="2">

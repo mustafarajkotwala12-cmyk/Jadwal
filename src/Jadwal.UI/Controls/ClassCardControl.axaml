@@ -4,15 +4,17 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:Jadwal.UI.ViewModels"
              xmlns:models="using:Jadwal.Domain.Models"
+             xmlns:conv="using:Avalonia.Data.Converters"
              mc:Ignorable="d" d:DesignWidth="220" d:DesignHeight="165"
              x:Class="Jadwal.UI.Controls.ClassCardControl"
              x:DataType="vm:ClassCardItemViewModel">
 
+    <!-- Status glow: BorderBrush bound to StatusBorderBrush (green=live, orange=changed, muted=done, default=upcoming) -->
     <Border MinWidth="180" Height="165"
             CornerRadius="14"
-            BorderThickness="1.5"
-            BorderBrush="{DynamicResource CardBorderBrush}"
-            Background="{DynamicResource CardBackgroundBrush}"
+            BorderThickness="2"
+            BorderBrush="{Binding StatusBorderBrush}"
+            Background="{Binding StatusCardBackground}"
             BoxShadow="0 4 14 0 #12000000"
             Margin="4">
         <Border.Transitions>
@@ -23,90 +25,74 @@
         </Border.Transitions>
 
         <Panel>
-            <!-- FRONT FACE: CLASS DETAILS -->
+            <!-- ═══════════════════════════════════════════════════════
+                 FRONT FACE: CLEAN SUBJECT CARD — No pills, no clutter
+            ═══════════════════════════════════════════════════════ -->
             <Grid RowDefinitions="Auto,*,Auto" Margin="12" IsVisible="{Binding !IsFlipped}">
-                <!-- Top Row: Period, Time, Status Badge -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4">
-                        <Border Background="{DynamicResource BronzeSoftBrush}"
-                                CornerRadius="6" Padding="6,2">
-                            <TextBlock Text="{Binding Period.PeriodName}"
-                                       FontSize="11" FontWeight="Bold"
-                                       Foreground="{DynamicResource BronzeBrush}" />
-                        </Border>
-                        <TextBlock Text="{Binding StartTime12H}"
-                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"
-                                   VerticalAlignment="Center" Margin="4,0,0,0" />
-                    </StackPanel>
 
-                    <!-- Live Status Pill -->
-                    <Border Grid.Column="2"
-                            CornerRadius="10" Padding="8,2"
-                            Background="{Binding StatusBadgeBackground}"
-                            BorderBrush="{Binding StatusBadgeBorder}"
-                            BorderThickness="1">
-                        <TextBlock Text="{Binding StatusText}"
-                                   FontSize="9" FontWeight="Bold"
-                                   Foreground="{Binding StatusBadgeForeground}" />
-                    </Border>
-                </Grid>
+                <!-- Top Row: Period name + time — plain text, NO pill badges -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5">
+                    <TextBlock Text="{Binding Period.PeriodName}"
+                               FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="·"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding StartTime12H}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center" />
+                </StackPanel>
 
-                <!-- Middle: Arabic Subject in Kanz-al-Lulu -->
+                <!-- Middle: Arabic Subject Name — Large, Bold, Clean -->
                 <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,4">
                     <TextBlock Text="{Binding Period.Subject}"
                                FontFamily="{StaticResource ArabicCalligraphyFont}"
-                               FontSize="24" FontWeight="SemiBold"
+                               FontSize="26" FontWeight="Bold"
                                TextAlignment="Center"
                                TextWrapping="NoWrap"
                                TextTrimming="CharacterEllipsis"
                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                    <TextBlock Text="{Binding Period.Details}"
-                               FontFamily="{StaticResource ArabicCalligraphyFont}"
-                               FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}"
-                               TextAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Margin="0,2,0,0" />
                 </StackPanel>
 
-                <!-- Bottom Row: Time End & Tasks Flip Button -->
+                <!-- Bottom Row: End time (plain) + subtle details flip button -->
                 <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
                     <TextBlock Grid.Column="0"
                                Text="{Binding EndTimeDisplay}"
                                FontSize="10" Foreground="{DynamicResource TextMutedBrush}"
                                VerticalAlignment="Center" />
 
+                    <!-- Subtle ℹ button to flip to details — no pill wrapper -->
                     <Button Grid.Column="1"
                             Classes="flat"
-                            Padding="6,3"
+                            Padding="4,2"
                             CornerRadius="8"
-                            Background="{DynamicResource BronzeSoftBrush}"
+                            Background="Transparent"
                             Click="OnFlipClicked">
-                        <StackPanel Orientation="Horizontal" Spacing="4">
-                            <TextBlock Text="📋" FontSize="10" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding TasksCountText}"
-                                       FontSize="10" FontWeight="Bold"
-                                       Foreground="{DynamicResource BronzeBrush}"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
+                        <TextBlock Text="ℹ"
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center" />
                     </Button>
                 </Grid>
             </Grid>
 
-            <!-- BACK FACE: SUBJECT TASKS MANAGEMENT -->
-            <Grid Grid.Row="0" RowDefinitions="Auto,*,Auto" Margin="10" IsVisible="{Binding IsFlipped}">
-                <!-- Header -->
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,4">
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="📋 Tasks •" FontSize="10" FontWeight="Bold"
-                                   Foreground="{DynamicResource BronzeBrush}"
-                                   VerticalAlignment="Center" />
-                        <TextBlock Text="{Binding Period.Subject}"
-                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                   FontSize="12" FontWeight="Bold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}"
-                                   TextTrimming="CharacterEllipsis"
-                                   VerticalAlignment="Center" />
-                    </StackPanel>
+            <!-- ═══════════════════════════════════════════════════════
+                 BACK FACE: TEACHER / DETAILS (Clean — No Task List)
+            ═══════════════════════════════════════════════════════ -->
+            <Grid RowDefinitions="Auto,*,Auto" Margin="12" IsVisible="{Binding IsFlipped}">
+
+                <!-- Header: Subject + Close -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,6">
+                    <TextBlock Grid.Column="0"
+                               Text="{Binding Period.Subject}"
+                               FontFamily="{StaticResource ArabicCalligraphyFont}"
+                               FontSize="14" FontWeight="Bold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis"
+                               VerticalAlignment="Center" />
                     <Button Grid.Column="1" Content="✕"
                             Classes="flat"
                             Padding="6,2" FontSize="10" FontWeight="Bold"
@@ -115,71 +101,50 @@
                             Click="OnFlipClicked" />
                 </Grid>
 
-                <!-- Task List (Scrollable) -->
-                <ScrollViewer Grid.Row="1" Margin="0,2,0,4" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <!-- Empty State Notice -->
-                        <TextBlock Text="No tasks for this subject yet."
-                                   IsVisible="{Binding !Tasks.Count}"
-                                   FontSize="10" FontStyle="Italic"
+                <!-- Teacher / Details content -->
+                <StackPanel Grid.Row="1" VerticalAlignment="Center" Spacing="8">
+
+                    <!-- Period & Time row -->
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="🕐" FontSize="12" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Period.PeriodName}"
+                                   FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="·" FontSize="11"
                                    Foreground="{DynamicResource TextMutedBrush}"
-                                   HorizontalAlignment="Center" Margin="0,16" />
-
-                        <!-- Interactive Task Items -->
-                        <ItemsControl ItemsSource="{Binding Tasks}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="models:TaskItem">
-                                    <Border Margin="0,2" Padding="6,3"
-                                            Background="{DynamicResource TaskItemBgBrush}"
-                                            BorderBrush="{DynamicResource CardBorderBrush}"
-                                            BorderThickness="1" CornerRadius="6">
-                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                            <!-- Checkbox for completion -->
-                                            <CheckBox Grid.Column="0"
-                                                      IsChecked="{Binding IsCompleted}"
-                                                      Command="{Binding $parent[UserControl].((vm:ClassCardItemViewModel)DataContext).ToggleTaskCompletionCommand}"
-                                                      CommandParameter="{Binding}"
-                                                      Padding="0" MinWidth="16" Height="16" Margin="0,0,4,0" />
-
-                                            <!-- Task Title -->
-                                            <TextBlock Grid.Column="1"
-                                                       Text="{Binding Title}"
-                                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                                       FontSize="11"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"
-                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
-
-                                            <!-- Delete Button -->
-                                            <Button Grid.Column="2" Content="×"
-                                                    Classes="flat" Padding="4,0" FontSize="11"
-                                                    Background="Transparent" Foreground="#D9383A"
-                                                    Command="{Binding $parent[UserControl].((vm:ClassCardItemViewModel)DataContext).DeleteTaskCommand}"
-                                                    CommandParameter="{Binding}" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding StartTime12H}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   VerticalAlignment="Center" />
                     </StackPanel>
-                </ScrollViewer>
 
-                <!-- Quick Inline Add Task Input -->
-                <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="0,2,0,0">
-                    <TextBox Grid.Column="0"
-                             Text="{Binding NewTaskTitle}"
-                             PlaceholderText="Add task for this subject..."
-                             FontFamily="{StaticResource ArabicCalligraphyFont}"
-                             FontSize="10" Height="26" Padding="6,2"
-                             CornerRadius="6"
-                             KeyDown="OnNewTaskKeyDown" />
-                    <Button Grid.Column="1" Content="+"
-                            Command="{Binding AddTaskCommand}"
-                            Background="{DynamicResource EmeraldBrush}"
-                            Foreground="White" FontWeight="Bold"
-                            Padding="8,2" Height="26" Margin="4,0,0,0"
-                            CornerRadius="6" />
-                </Grid>
+                    <!-- Teacher / Details (Arabic calligraphy) -->
+                    <StackPanel Orientation="Horizontal" Spacing="6"
+                                IsVisible="{Binding Period.Details, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Text="👤" FontSize="12" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Period.Details}"
+                                   FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                   FontSize="15"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <!-- Fallback if no details -->
+                    <TextBlock Text="No additional details."
+                               IsVisible="{Binding Period.Details, Converter={x:Static StringConverters.IsNullOrEmpty}}"
+                               FontSize="11" FontStyle="Italic"
+                               Foreground="{DynamicResource TextMutedBrush}" />
+                </StackPanel>
+
+                <!-- Bottom: End time -->
+                <TextBlock Grid.Row="2"
+                           Text="{Binding EndTimeDisplay}"
+                           FontSize="10"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" />
             </Grid>
         </Panel>
     </Border>

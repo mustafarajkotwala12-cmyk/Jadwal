@@ -28,6 +28,8 @@ public class ClassCardItemViewModel : ObservableObject
                 OnPropertyChanged(nameof(StatusBadgeBackground));
                 OnPropertyChanged(nameof(StatusBadgeForeground));
                 OnPropertyChanged(nameof(StatusBadgeBorder));
+                OnPropertyChanged(nameof(StatusBorderBrush));
+                OnPropertyChanged(nameof(StatusCardBackground));
             }
         }
     }
@@ -202,6 +204,28 @@ public class ClassCardItemViewModel : ObservableObject
         ClassStatusKind.Changed => "#FFEEBA",
         ClassStatusKind.Cancelled => "#F5C6CB",
         _ => "#DFD5C2"
+    };
+
+    /// <summary>Card border glow colour — replaces pills for status indication.</summary>
+    public string StatusBorderBrush => Status.Kind switch
+    {
+        ClassStatusKind.InProgress    => "#22C55E",  // Green glow — Live / In Session
+        ClassStatusKind.StartingSoon  => "#3B82F6",  // Blue glow  — Starting Soon
+        ClassStatusKind.Completed     => "#94A3B8",  // Muted grey — Done
+        ClassStatusKind.Changed       => "#F59E0B",  // Amber glow — Changed
+        ClassStatusKind.Cancelled     => "#EF4444",  // Red glow   — Cancelled
+        _                             => "#3D2E1E"   // Dark border — Upcoming (default theme)
+    };
+
+    /// <summary>Subtle card background tint matching the status glow.</summary>
+    public string StatusCardBackground => Status.Kind switch
+    {
+        ClassStatusKind.InProgress    => "#F0FDF4",  // Very light green
+        ClassStatusKind.StartingSoon  => "#EFF6FF",  // Very light blue
+        ClassStatusKind.Completed     => "#F1F5F9",  // Light grey (dimmed)
+        ClassStatusKind.Changed       => "#FFFBEB",  // Light amber
+        ClassStatusKind.Cancelled     => "#FEF2F2",  // Light red
+        _                             => "#FFFDF7"   // Warm cream — upcoming
     };
 }
 
