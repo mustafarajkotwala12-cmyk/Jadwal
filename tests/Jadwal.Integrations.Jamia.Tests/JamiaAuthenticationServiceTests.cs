@@ -231,6 +231,15 @@ public class JamiaAuthenticationServiceTests
         freshTok.Should().Be(token2);
         mockAuth.AcquireCallCount.Should().Be(1);
     }
+
+    [Fact]
+    public async Task Playwright_DriverCanInitializeAsync()
+    {
+        // Verifies that Microsoft.Playwright can locate its bundled node driver without errors
+        using var playwright = await Microsoft.Playwright.Playwright.CreateAsync();
+        playwright.Should().NotBeNull();
+        playwright.Chromium.Should().NotBeNull();
+    }
 }
 
 internal class MemoryJamiaCredentialStore : IJamiaCredentialStore

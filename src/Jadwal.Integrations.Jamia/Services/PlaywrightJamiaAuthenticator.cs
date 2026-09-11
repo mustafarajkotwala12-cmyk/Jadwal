@@ -43,6 +43,8 @@ public class PlaywrightJamiaAuthenticator : IJamiaInteractiveAuthenticator
         var profileDir = GetBrowserProfileDirectory();
         Directory.CreateDirectory(profileDir);
 
+        EnsurePlaywrightDriverPathConfigured();
+
         using var playwright = await Playwright.CreateAsync();
 
         IBrowserContext? context = null;
@@ -332,5 +334,50 @@ public class PlaywrightJamiaAuthenticator : IJamiaInteractiveAuthenticator
         }
 
         return Path.Combine(baseDir, "browser-profile");
+    }
+
+    private static void EnsurePlaywrightDriverPathConfigured()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var candidates = new List<string>
+        {
+            baseDir,
+            Path.Combine(baseDir, "..", "Resources"),
+            Path.Combine(baseDir, ".."),
+            Path.Combine(baseDir, "..", ".."),
+            Path.Combine(baseDir, "..", "..", ".."),
+            Directory.GetCurrentDirectory()
+        };
+
+        foreach (var dir in candidates)
+        {
+            if (Directory.Exists(dir))
+            {
+                var playwrightDir = Path.Combine(dir, ".playwright");
+                if (Directory.Exists(playwrightDir))
+                {
+                    Environment.SetEnvironmentVariable("PLAYWRIGHT_DRIVER_SEARCH_PATH", dir);
+
+                    // Ensure node executable has +x permissions on Unix
+                    if (!OperatingSystem.IsWindows())
+                    {
+                        var platformDir = OperatingSystem.IsMacOS() ? "darwin-x64" : "linux-x64";
+                        var nodeBinary = Path.Combine(playwrightDir, "node", platformDir, "node");
+                        if (File.Exists(nodeBinary))
+                        {
+                            try
+                            {
+                                File.SetUnixFileMode(nodeBinary,
+                                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                                    UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                                    UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                            }
+                            catch { }
+                        }
+                    }
+                    return;
+                }
+            }
+        }
     }
 }
