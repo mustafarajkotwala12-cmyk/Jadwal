@@ -28,11 +28,11 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="220,*">
-        <!-- LEFT SIDEBAR -->
+    <Grid ColumnDefinitions="240,*">
+        <!-- LEFT SIDEBAR / MENU CARD -->
         <Border Grid.Column="0"
                 Background="{DynamicResource SidebarGradientBrush}"
-                Padding="16,24">
+                Padding="16,20">
             <Border.Transitions>
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.3" Easing="CubicEaseOut" />
@@ -41,7 +41,7 @@
             <Grid RowDefinitions="Auto,*,Auto">
 
                 <!-- BRAND HEADER -->
-                <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,24">
+                <StackPanel Grid.Row="0" Spacing="2" Margin="0,0,0,18">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock Text="📖" FontSize="22" VerticalAlignment="Center" />
                         <TextBlock Text="Jadwal"
@@ -57,7 +57,7 @@
                 </StackPanel>
 
                 <!-- NAVIGATION BUTTONS -->
-                <StackPanel Grid.Row="1" Spacing="8">
+                <StackPanel Grid.Row="1" Spacing="6" VerticalAlignment="Top">
                     <!-- Today -->
                     <Button Classes="navBtn" Command="{Binding NavigateToTodayCommand}">
                         <StackPanel Orientation="Horizontal" Spacing="12">
@@ -99,9 +99,79 @@
                     </Button>
                 </StackPanel>
 
-                <!-- FOOTER -->
-                <Border Grid.Row="2" Background="#12FFFFFF" CornerRadius="8" Padding="10,6">
-                    <TextBlock Text="Fatimid UI • .NET 10" FontSize="10" Foreground="{DynamicResource SidebarTextMutedBrush}" HorizontalAlignment="Center" />
+                <!-- DATE AND TIME IN BIG LETTERS (MENU CARD BOTTOM) -->
+                <Border Grid.Row="2"
+                        Background="#1A000000"
+                        BorderBrush="{DynamicResource GoldSoftBrush}"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="14,14"
+                        Margin="0,12,0,0"
+                        BoxShadow="0 4 12 0 #20000000">
+                    <StackPanel Spacing="10">
+
+                        <!-- DATE SECTION (BIG LETTERS) -->
+                        <StackPanel Spacing="3" HorizontalAlignment="Center">
+                            <!-- Arabic Weekday Calligraphy -->
+                            <TextBlock Text="{Binding BigDateArabicDay}"
+                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
+                                       FontSize="22" FontWeight="Bold"
+                                       Foreground="{DynamicResource GoldBrush}"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- English Day (Big Bold) -->
+                            <TextBlock Text="{Binding BigDateDay}"
+                                       FontSize="18" FontWeight="ExtraBold"
+                                       Foreground="White"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Gregorian Date -->
+                            <TextBlock Text="{Binding BigDateEnglish}"
+                                       FontSize="13" FontWeight="SemiBold"
+                                       Foreground="#E0EDE7"
+                                       HorizontalAlignment="Center" />
+
+                            <!-- Hijri Date -->
+                            <Border Background="#20C5A880"
+                                    BorderBrush="{DynamicResource GoldSoftBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="10,3"
+                                    Margin="0,4,0,0"
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding BigDateHijri}"
+                                           FontSize="12" FontWeight="Bold"
+                                           Foreground="{DynamicResource GoldBrush}"
+                                           HorizontalAlignment="Center" />
+                            </Border>
+                        </StackPanel>
+
+                        <!-- SLEEK DIVIDER -->
+                        <Rectangle Height="1" Fill="#20FFFFFF" Margin="4,0" />
+
+                        <!-- TIME SECTION (BIG LETTERS) -->
+                        <StackPanel Spacing="2" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding BigTimeDigits}"
+                                           FontFamily="Courier New, monospace"
+                                           FontSize="32" FontWeight="Heavy"
+                                           Foreground="White"
+                                           VerticalAlignment="Bottom" />
+                                <TextBlock Text="{Binding BigTimeAmPm}"
+                                           FontSize="15" FontWeight="Bold"
+                                           Foreground="{DynamicResource GoldBrush}"
+                                           VerticalAlignment="Bottom"
+                                           Margin="0,0,0,4" />
+                            </StackPanel>
+
+                            <!-- Live Time Indicator -->
+                            <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" Margin="0,2,0,0">
+                                <Ellipse Width="6" Height="6" Fill="#22C55E" VerticalAlignment="Center" />
+                                <TextBlock Text="Live Time" FontSize="10" Foreground="{DynamicResource SidebarTextMutedBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </StackPanel>
+
+                    </StackPanel>
                 </Border>
             </Grid>
         </Border>

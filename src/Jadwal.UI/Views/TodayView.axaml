@@ -12,62 +12,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Spacing="16" Margin="24">
 
-            <!-- HERO BANNER: DATE & TIME (FATIMID ILLUMINATED STYLE) -->
-            <Border CornerRadius="18"
-                    Background="{DynamicResource BannerGradientBrush}"
-                    Padding="26,20"
-                    BoxShadow="0 8 24 0 #200B4F39">
-                <Border.Transitions>
-                    <Transitions>
-                        <BrushTransition Property="Background" Duration="0:0:0.3" Easing="CubicEaseOut" />
-                    </Transitions>
-                </Border.Transitions>
-                <Grid ColumnDefinitions="*,Auto">
-                    <!-- Left: Arabic Weekday, English Date, Hijri Date, Subtitle -->
-                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="14">
-                            <TextBlock Text="{Binding ArabicWeekday}"
-                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                       FontSize="32" FontWeight="Bold"
-                                       Foreground="White" />
-                            <TextBlock Text="{Binding HijriDateArabic}"
-                                       FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                       FontSize="24"
-                                       Foreground="{DynamicResource GoldBrush}"
-                                       VerticalAlignment="Center" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{Binding EnglishDate}"
-                                       FontSize="15" FontWeight="SemiBold"
-                                       Foreground="#F0F8F5" />
-                            <TextBlock Text="•" Foreground="#85C2A8" FontSize="14" />
-                            <TextBlock Text="{Binding HijriDateFormatted}"
-                                       FontSize="15" FontWeight="Bold"
-                                       Foreground="{DynamicResource GoldBrush}" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding DaySubtitle}"
-                                   FontSize="12" Foreground="#D5E8DF"
-                                   Margin="0,2,0,0" />
-                    </StackPanel>
-
-                    <!-- Right: Digital Clock & Status Pill -->
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Spacing="8">
-                        <Border Background="#25FFFFFF" CornerRadius="10" Padding="12,6" HorizontalAlignment="Right">
-                            <TextBlock Text="{Binding CurrentTimeString}"
-                                       FontFamily="Courier New, monospace"
-                                       FontSize="16" FontWeight="Bold"
-                                       Foreground="White" />
-                        </Border>
-                        <Border Background="{DynamicResource EmeraldBrush}" CornerRadius="12" Padding="12,6">
-                            <TextBlock Text="{Binding ActiveStatusDescription}"
-                                       FontSize="12" FontWeight="SemiBold"
-                                       Foreground="White" />
-                        </Border>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!-- TODAY'S MIQAAT(S) SECTION (SHOWS DATE AND ALL MIQAATS IN THE DAY) -->
+            <!-- MIQAAT BAR (TOP OF TODAY PAGE) -->
             <Border Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource GoldBrush}"
                     BorderThickness="1.5"
@@ -82,19 +27,12 @@
                                        FontSize="16" FontWeight="Bold"
                                        Foreground="{DynamicResource TextPrimaryBrush}"
                                        VerticalAlignment="Center" />
-                            <Border Background="{DynamicResource GoldSoftBrush}"
-                                    CornerRadius="6" Padding="8,2" Margin="4,0,0,0"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="{Binding HijriDateFormatted}"
-                                           FontSize="12" FontWeight="Bold"
-                                           Foreground="{DynamicResource BronzeBrush}" />
-                            </Border>
                         </StackPanel>
 
                         <TextBlock Grid.Column="1"
-                                   Text="{Binding HijriDateArabic}"
+                                   Text="الميقات"
                                    FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                   FontSize="20"
+                                   FontSize="22" FontWeight="Bold"
                                    Foreground="{DynamicResource BronzeBrush}"
                                    VerticalAlignment="Center" />
                     </Grid>
