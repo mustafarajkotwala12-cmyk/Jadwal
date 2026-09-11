@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-4.0.0-0B4F39.svg" alt="Version 4.0.0" />
+  <img src="https://img.shields.io/badge/Version-4.1.0-0B4F39.svg" alt="Version 4.1.0" />
   <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-C5A059.svg" alt="Platform macOS and Windows" />
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4.svg" alt=".NET 10" />
   <img src="https://img.shields.io/badge/UI-Avalonia%2012-purple.svg" alt="Avalonia UI" />
-  <img src="https://img.shields.io/badge/Tests-76%20Passed-success.svg" alt="76 Tests Passed" />
+  <img src="https://img.shields.io/badge/Tests-87%20Passed-success.svg" alt="87 Tests Passed" />
 </p>
 
 ---
@@ -70,7 +70,7 @@
 - **Developer Credits**: Dedicated credit section highlighting application metadata and developer attribution:
   - **App**: Jadwal (جدول)
   - **Developer**: Mustafa Rajkotwala
-  - **Version**: 4.0.0
+  - **Version**: 4.1.0
 - **Launch at Startup**: Optional automatic system startup toggle on both macOS (LaunchAgent) and Windows (Registry Run).
 
 ---
@@ -90,7 +90,7 @@ JameaHelper/
 │   ├── Jadwal.Platform.Windows/ # Windows DPAPI storage, toast notifications, Registry startup
 │   ├── Jadwal.UI/               # Avalonia MVVM Views, ViewModels, Fatimid theme tokens, Kanzallulu font
 │   └── Jadwal.App/              # Application entry point, DI configuration, native launcher
-├── tests/                       # 5 comprehensive test projects (85 unit & integration tests)
+├── tests/                       # 5 comprehensive test projects (87 unit & integration tests)
 ├── dist/                        # Packaged macOS (.app, .zip) and Windows (win-x64) release bundles
 ├── Data/                        # Official miqaats.json dataset
 ├── assets/                      # Official application icons (PNG & ICNS)
@@ -106,13 +106,13 @@ JameaHelper/
 > 💡 **No Python required!** Jadwal runs completely on native .NET with embedded Playwright browser automation.
 
 ### macOS
-1. Download **`Jadwal-v4.0.0-macos-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
+1. Download **`Jadwal-v4.1.0-macos-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
 2. Unzip the file and move **`Jadwal.app`** to `/Applications`.
 3. Double-click to open. If prompted by macOS Gatekeeper, right-click and choose **Open**.
 4. Click **Settings > Sync Jamia Timetable** to download your official schedule.
 
 ### Windows
-1. Download **`Jadwal-v4.0.0-windows-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
+1. Download **`Jadwal-v4.1.0-windows-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
 2. Extract the archive.
 3. Launch **`Jadwal.App.exe`**.
 

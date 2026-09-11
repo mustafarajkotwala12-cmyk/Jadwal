@@ -2,7 +2,7 @@
 
 Welcome to **Jadwal (جدول)**! This step-by-step guide will walk you through downloading, installing, and setting up Jadwal on **Windows** and **macOS**.
 
-> 🚀 **No Python Required!** Starting with version 4.0.0, Jadwal features a 100% native .NET sync engine. You do **not** need to install Python, pip, or run command-line setup scripts.
+> 🚀 **No Python Required!** Starting with version 4.0.0+, Jadwal features a 100% native .NET sync engine. You do **not** need to install Python, pip, or run command-line setup scripts.
 
 ---
 
@@ -19,8 +19,8 @@ Follow these 2 simple steps to get Jadwal running on Windows 10 or Windows 11:
 
 ### Step 1: Download the Jadwal Windows App
 1. Go to the **[Jadwal GitHub Releases page](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases)**.
-2. Under the latest release (v4.0.0), download:
-   - 📦 **`Jadwal-v4.0.0-windows-x64.zip`**
+2. Under the latest release (v4.1.0), download:
+   - 📦 **`Jadwal-v4.1.0-windows-x64.zip`**
 3. Once downloaded, **Right-click** the ZIP file and select **"Extract All..."**, then click **Extract**.
 
 ---
@@ -41,8 +41,8 @@ Follow these 2 simple steps to install Jadwal on your Mac (macOS Monterey, Ventu
 
 ### Step 1: Download Jadwal for Mac
 1. Go to the **[Jadwal GitHub Releases page](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases)**.
-2. Under the latest release (v4.0.0), download:
-   - 📦 **`Jadwal-v4.0.0-macos-x64.zip`**
+2. Under the latest release (v4.1.0), download:
+   - 📦 **`Jadwal-v4.1.0-macos-x64.zip`**
 3. Double-click the downloaded `.zip` file to unzip it. You will see **`Jadwal.app`**.
 4. Drag **`Jadwal.app`** into your **`Applications`** folder.
 

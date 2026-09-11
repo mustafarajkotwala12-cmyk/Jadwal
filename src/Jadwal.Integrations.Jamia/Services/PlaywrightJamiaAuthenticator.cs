@@ -48,7 +48,9 @@ public class PlaywrightJamiaAuthenticator : IJamiaInteractiveAuthenticator
         using var playwright = await Playwright.CreateAsync();
 
         IBrowserContext? context = null;
-        var channelsToTry = new[] { null, "chrome", "msedge", "chromium" };
+        var channelsToTry = OperatingSystem.IsWindows()
+            ? new[] { "msedge", "chrome", null, "chromium" }
+            : new[] { "chrome", "msedge", null, "chromium" };
         Exception? lastLaunchErr = null;
 
         for (int attempt = 0; attempt < 2 && context == null; attempt++)
@@ -361,18 +363,24 @@ public class PlaywrightJamiaAuthenticator : IJamiaInteractiveAuthenticator
                     // Ensure node executable has +x permissions on Unix
                     if (!OperatingSystem.IsWindows())
                     {
-                        var platformDir = OperatingSystem.IsMacOS() ? "darwin-x64" : "linux-x64";
-                        var nodeBinary = Path.Combine(playwrightDir, "node", platformDir, "node");
-                        if (File.Exists(nodeBinary))
+                        var platformDirs = OperatingSystem.IsMacOS()
+                            ? new[] { "darwin-x64", "darwin-arm64" }
+                            : new[] { "linux-x64", "linux-arm64" };
+
+                        foreach (var platformDir in platformDirs)
                         {
-                            try
+                            var nodeBinary = Path.Combine(playwrightDir, "node", platformDir, "node");
+                            if (File.Exists(nodeBinary))
                             {
-                                File.SetUnixFileMode(nodeBinary,
-                                    UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
-                                    UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
-                                    UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                                try
+                                {
+                                    File.SetUnixFileMode(nodeBinary,
+                                        UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                                        UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                                        UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+                                }
+                                catch { }
                             }
-                            catch { }
                         }
                     }
                     return;
