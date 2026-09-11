@@ -48,7 +48,7 @@
                 <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,4">
                     <TextBlock Text="{Binding Period.Subject}"
                                FontFamily="{StaticResource ArabicCalligraphyFont}"
-                               FontSize="26" FontWeight="Bold"
+                               FontSize="32" FontWeight="Bold"
                                TextAlignment="Center"
                                TextWrapping="NoWrap"
                                TextTrimming="CharacterEllipsis"

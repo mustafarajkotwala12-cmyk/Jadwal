@@ -178,6 +178,27 @@
                                 Background="{DynamicResource BronzeSoftBrush}" Foreground="{DynamicResource BronzeBrush}"
                                 Padding="16,9" CornerRadius="8" FontWeight="SemiBold" Margin="0,0,10,10" />
                     </WrapPanel>
+
+                    <!-- AUTO SYNC INTERVAL -->
+                    <Border Background="#0A000000" CornerRadius="10" Padding="14,10" Margin="0,4,0,0">
+                        <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="🔁 Auto Sync Interval" FontSize="13" FontWeight="Bold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="Background sync with Jamia API. Detects timetable changes automatically."
+                                           FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="12,0,0,0">
+                                <ComboBox SelectedItem="{Binding SyncIntervalMinutes}"
+                                          ItemsSource="{Binding SyncIntervalOptions}"
+                                          MinWidth="80" CornerRadius="8"
+                                          ToolTip.Tip="Choose how often the app syncs with the Jamia portal (3–10 minutes)" />
+                                <TextBlock Text="min" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </StackPanel>
             </Border>
 

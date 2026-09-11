@@ -12,6 +12,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly TimetableService _timetableService;
     private readonly ILegacyMigrationService _legacyMigrator;
     private readonly ThemeService _themeService;
+    private readonly TodayViewModel? _todayVm;
 
     [ObservableProperty]
     private string _itsId = string.Empty;
@@ -56,18 +57,36 @@ public partial class SettingsViewModel : ViewModelBase
     public string AppVersion => "3.0.0 (LTS)";
     public string AppSubtitle => "Academic Schedule & Task Companion for Aljamea-tus-Saifiyah";
 
+    // Sync Interval (bound to TodayViewModel)
+    public int[] SyncIntervalOptions => TodayViewModel.SyncIntervalOptions;
+
+    public int SyncIntervalMinutes
+    {
+        get => _todayVm?.SyncIntervalMinutes ?? 4;
+        set
+        {
+            if (_todayVm != null)
+            {
+                _todayVm.SyncIntervalMinutes = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public Func<Task<string?>>? PickFileHandler { get; set; }
 
     public SettingsViewModel(
         ISecureStorage secureStorage,
         TimetableService timetableService,
         ILegacyMigrationService legacyMigrator,
-        ThemeService? themeService = null)
+        ThemeService? themeService = null,
+        TodayViewModel? todayVm = null)
     {
         _secureStorage = secureStorage;
         _timetableService = timetableService;
         _legacyMigrator = legacyMigrator;
         _themeService = themeService ?? new ThemeService();
+        _todayVm = todayVm;
 
         var savedTheme = _themeService.GetSavedTheme();
         SelectedTheme = savedTheme switch

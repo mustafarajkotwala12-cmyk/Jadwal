@@ -331,10 +331,19 @@ public partial class TodayViewModel : ViewModelBase
     public ObservableCollection<ClassCardItemViewModel> Row2Cards { get; } = new();
     public ObservableCollection<ClassCardItemViewModel> Row3Cards { get; } = new();
 
-    public ObservableCollection<object> Row1Items { get; } = new();
-    public ObservableCollection<object> Row2Items { get; } = new();
-
     private Avalonia.Threading.DispatcherTimer? _clockTimer;
+    private Avalonia.Threading.DispatcherTimer? _syncTimer;
+
+    // Valid sync intervals in minutes (3 to 10)
+    public static readonly int[] SyncIntervalOptions = { 3, 4, 5, 6, 7, 8, 9, 10 };
+
+    [ObservableProperty]
+    private int _syncIntervalMinutes = 4;
+
+    partial void OnSyncIntervalMinutesChanged(int value)
+    {
+        RestartSyncTimer();
+    }
 
     public TodayViewModel(
         DashboardService dashboardService,
@@ -356,19 +365,15 @@ public partial class TodayViewModel : ViewModelBase
     {
         await RefreshScheduleAsync();
         StartClockTimer();
+        StartSyncTimer();
     }
 
     public void StartClockTimer()
     {
-        if (_clockTimer == null)
-        {
-            _clockTimer = new Avalonia.Threading.DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _clockTimer.Tick += (s, e) => OnTick();
-            _clockTimer.Start();
-        }
+        if (_clockTimer != null) return;
+        _clockTimer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _clockTimer.Tick += (_, _) => OnTick();
+        _clockTimer.Start();
     }
 
     public void StopClockTimer()
@@ -377,29 +382,59 @@ public partial class TodayViewModel : ViewModelBase
         _clockTimer = null;
     }
 
+    /// <summary>Starts (or restarts) the background Jamia API sync timer.</summary>
+    public void StartSyncTimer()
+    {
+        _syncTimer?.Stop();
+        _syncTimer = new Avalonia.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(SyncIntervalMinutes)
+        };
+        _syncTimer.Tick += async (_, _) => await SilentSyncAsync();
+        _syncTimer.Start();
+    }
+
+    public void StopSyncTimer()
+    {
+        _syncTimer?.Stop();
+        _syncTimer = null;
+    }
+
+    private void RestartSyncTimer()
+    {
+        if (_syncTimer != null) StartSyncTimer();
+    }
+
+    /// <summary>Background sync: fetches the latest timetable from Jamia API without forcing login.</summary>
+    private async Task SilentSyncAsync()
+    {
+        if (_timetableService == null) return;
+        try
+        {
+            await _timetableService.RefreshTimetableAsync(forceLogin: false);
+            await RefreshScheduleAsync();
+        }
+        catch
+        {
+            // Silent sync — swallow errors; user can manually re-authenticate from Settings.
+        }
+    }
+
     public void OnTick()
     {
         CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
         _tickCount++;
 
-        // Sync date/day change if computer clock crossed midnight
+        // Reload schedule if the calendar day has changed
         if (_timeProvider.CurrentDayOfWeek != _loadedDay)
         {
             _ = RefreshScheduleAsync();
             return;
         }
 
-        // Keep all card statuses updated in sync with computer clock every 5 seconds
+        // Update live card statuses every 5 seconds
         if (_tickCount % 5 == 0)
-        {
             UpdateLiveStatuses();
-        }
-
-        // Full refresh periodically (every 30 seconds)
-        if (_tickCount % 30 == 0)
-        {
-            _ = RefreshScheduleAsync();
-        }
     }
 
     public void UpdateLiveStatuses()
@@ -564,39 +599,6 @@ public partial class TodayViewModel : ViewModelBase
                 Row3Cards.Add(card);
             }
             HasRow3 = Row3Cards.Count > 0;
-        }
-
-        // Backwards compatibility for Row1Items and Row2Items
-        Row1Items.Clear();
-        foreach (var item in dto.Row1Items)
-        {
-            if (item.Kind == ScheduleTimelineItemKind.ClassPeriod && item.Period != null)
-            {
-                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
-                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
-                foreach (var t in related) cardVm.Tasks.Add(t);
-                Row1Items.Add(cardVm);
-            }
-            else if (item.Kind == ScheduleTimelineItemKind.BreakBlock && item.Break != null)
-            {
-                Row1Items.Add(new BreakPillItemViewModel(item.Break));
-            }
-        }
-
-        Row2Items.Clear();
-        foreach (var item in dto.Row2Items)
-        {
-            if (item.Kind == ScheduleTimelineItemKind.ClassPeriod && item.Period != null)
-            {
-                var cardVm = new ClassCardItemViewModel(item.Period, item.Status, _taskService);
-                var related = allTasks.Where(t => IsTaskRelatedToPeriod(t, item.Period));
-                foreach (var t in related) cardVm.Tasks.Add(t);
-                Row2Items.Add(cardVm);
-            }
-            else if (item.Kind == ScheduleTimelineItemKind.BreakBlock && item.Break != null)
-            {
-                Row2Items.Add(new BreakPillItemViewModel(item.Break));
-            }
         }
 
         IsEmptyDay = Row1Cards.Count == 0 && Row2Cards.Count == 0;

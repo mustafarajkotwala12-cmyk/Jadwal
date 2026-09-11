@@ -117,6 +117,7 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             Path.Combine(AppContext.BaseDirectory, "jamea_token.json"),
             Path.Combine(_workspaceDirectory, "data", "jamea_token.json"),
             Path.Combine(_workspaceDirectory, "Data", "jamea_token.json"),
+            // macOS
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "jamea_token.json")
         };
 
@@ -370,7 +371,14 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
 
         var pythonDir = Path.GetDirectoryName(pythonExe) ?? "";
         var existingPath = psi.EnvironmentVariables.ContainsKey("PATH") ? psi.EnvironmentVariables["PATH"] : "";
-        psi.EnvironmentVariables["PATH"] = $"{pythonDir}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:{existingPath}";
+        if (OperatingSystem.IsWindows())
+        {
+            psi.EnvironmentVariables["PATH"] = $"{pythonDir};{existingPath}";
+        }
+        else
+        {
+            psi.EnvironmentVariables["PATH"] = $"{pythonDir}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:{existingPath}";
+        }
 
         if (!string.IsNullOrEmpty(itsId))
         {
@@ -506,11 +514,17 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         }
 
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-        var known = new[]
+        var known = new List<string>
         {
             Path.Combine(home, "JameaHelper", "helper", "jamea_helper.py"),
             "/Users/mustafarajkotwala/JameaHelper/helper/jamea_helper.py"
         };
+        if (OperatingSystem.IsWindows())
+        {
+            known.Add(Path.Combine(home, "JameaHelper", "helper", "jamea_helper.py"));
+            // Windows: typically C:\Users\<name>\JameaHelper\helper\jamea_helper.py
+            known.Add(Path.Combine("C:\\", "JameaHelper", "helper", "jamea_helper.py"));
+        }
         foreach (var k in known)
         {
             if (File.Exists(k)) return k;
@@ -521,6 +535,26 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
 
     private static string ResolvePythonExecutable()
     {
+        if (OperatingSystem.IsWindows())
+        {
+            var winCandidates = new[]
+            {
+                // py launcher (preferred on Windows — picks latest installed Python)
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "py.exe"),
+                // Common Windows Python install locations
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Python313", "python.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Python312", "python.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Python311", "python.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python", "Python313", "python.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python", "Python312", "python.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python", "Python311", "python.exe"),
+                "py",
+                "python",
+                "python3"
+            };
+            return winCandidates.FirstOrDefault(File.Exists) ?? "py";
+        }
+
         var candidates = new[]
         {
             "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3",

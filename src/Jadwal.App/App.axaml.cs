@@ -85,12 +85,12 @@ public partial class App : Avalonia.Application
         services.AddSingleton<ReminderService>();
         services.AddSingleton<CalendarService>();
 
-        // ViewModels
-        services.AddTransient<TodayViewModel>();
-        services.AddTransient<CalendarViewModel>();
-        services.AddTransient<TimetableViewModel>();
-        services.AddTransient<TasksViewModel>();
-        services.AddTransient<SettingsViewModel>();
+        // ViewModels — Singleton ensures the same instance is shared across the app
+        services.AddSingleton<TodayViewModel>();
+        services.AddSingleton<CalendarViewModel>();
+        services.AddSingleton<TimetableViewModel>();
+        services.AddSingleton<TasksViewModel>();
+        services.AddSingleton<SettingsViewModel>();
         services.AddTransient<MenuBarViewModel>();
         services.AddSingleton<MainViewModel>();
     }

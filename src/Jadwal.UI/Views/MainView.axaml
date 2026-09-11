@@ -115,13 +115,13 @@
                             <!-- Arabic Weekday Calligraphy -->
                             <TextBlock Text="{Binding BigDateArabicDay}"
                                        FontFamily="{StaticResource ArabicCalligraphyFont}"
-                                       FontSize="22" FontWeight="Bold"
+                                       FontSize="26" FontWeight="Bold"
                                        Foreground="{DynamicResource GoldBrush}"
                                        HorizontalAlignment="Center" />
 
                             <!-- English Day (Big Bold) -->
                             <TextBlock Text="{Binding BigDateDay}"
-                                       FontSize="18" FontWeight="ExtraBold"
+                                       FontSize="22" FontWeight="ExtraBold"
                                        Foreground="White"
                                        HorizontalAlignment="Center" />
 
@@ -149,22 +149,31 @@
                         <!-- SLEEK DIVIDER -->
                         <Rectangle Height="1" Fill="#20FFFFFF" Margin="4,0" />
 
-                        <!-- TIME SECTION (BIG LETTERS) -->
+                        <!-- TIME SECTION (BIG LETTERS + SECONDS) -->
                         <StackPanel Spacing="2" HorizontalAlignment="Center">
-                            <StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                                <!-- H:MM -->
                                 <TextBlock Text="{Binding BigTimeDigits}"
                                            FontFamily="Courier New, monospace"
-                                           FontSize="32" FontWeight="Heavy"
+                                           FontSize="40" FontWeight="Heavy"
                                            Foreground="White"
                                            VerticalAlignment="Bottom" />
-                                <TextBlock Text="{Binding BigTimeAmPm}"
-                                           FontSize="15" FontWeight="Bold"
+                                <!-- :SS -->
+                                <TextBlock Text="{Binding BigTimeSeconds}"
+                                           FontFamily="Courier New, monospace"
+                                           FontSize="22" FontWeight="Bold"
                                            Foreground="{DynamicResource GoldBrush}"
                                            VerticalAlignment="Bottom"
                                            Margin="0,0,0,4" />
+                                <!-- AM/PM -->
+                                <TextBlock Text="{Binding BigTimeAmPm}"
+                                           FontSize="15" FontWeight="Bold"
+                                           Foreground="{DynamicResource SidebarTextMutedBrush}"
+                                           VerticalAlignment="Bottom"
+                                           Margin="4,0,0,6" />
                             </StackPanel>
 
-                            <!-- Live Time Indicator -->
+                            <!-- Live indicator -->
                             <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center" Margin="0,2,0,0">
                                 <Ellipse Width="6" Height="6" Fill="#22C55E" VerticalAlignment="Center" />
                                 <TextBlock Text="Live Time" FontSize="10" Foreground="{DynamicResource SidebarTextMutedBrush}" VerticalAlignment="Center" />
