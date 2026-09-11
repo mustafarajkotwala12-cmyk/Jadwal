@@ -18,13 +18,13 @@ API_BASE = "https://api.jameasaifiyah.org"
 
 if "JAMEA_DATA_DIR" in os.environ:
     DATA_DIR = Path(os.environ["JAMEA_DATA_DIR"])
+elif sys.platform == "win32":
+    appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+    DATA_DIR = Path(appdata) / "Jadwal" / "data"
+elif sys.platform == "darwin":
+    DATA_DIR = Path.home() / "Library" / "Application Support" / "Jadwal" / "data"
 else:
-    repo_data_dir = Path(__file__).resolve().parent.parent / "data"
-    # Check if parent is a repository or writable workspace
-    if repo_data_dir.exists() or not str(Path(__file__)).endswith(".app/Contents/Resources/helper/jamea_helper.py"):
-        DATA_DIR = repo_data_dir
-    else:
-        DATA_DIR = Path.home() / "Library" / "Application Support" / "Jadwal" / "data"
+    DATA_DIR = Path.home() / ".config" / "Jadwal" / "data"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -80,8 +80,12 @@ def save_token(token: str) -> None:
             f
         )
 
-    # Restrict the file to the current user.
-    os.chmod(TOKEN_FILE, stat.S_IRUSR | stat.S_IWUSR)
+    # Restrict the file to the current user (Unix only).
+    if sys.platform != "win32":
+        try:
+            os.chmod(TOKEN_FILE, stat.S_IRUSR | stat.S_IWUSR)
+        except OSError:
+            pass
 
 
 def load_token(expected_its_id: str | None = None) -> str | None:
@@ -94,6 +98,12 @@ def load_token(expected_its_id: str | None = None) -> str | None:
         Path.home() / "Library" / "Application Support" / "Jadwal" / "data" / "jamea_token.json",
         Path.home() / "Library" / "Application Support" / "SWIFT" / "data" / "jamea_token.json",
     ]
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+        candidate_paths.extend([
+            Path(appdata) / "Jadwal" / "data" / "jamea_token.json",
+            Path(appdata) / "Jadwal" / "jamea_token.json",
+        ])
 
     for path in candidate_paths:
         if not path.exists():
@@ -136,6 +146,12 @@ def delete_token() -> None:
         Path.home() / "Library" / "Application Support" / "Jadwal" / "data" / "jamea_token.json",
         Path.home() / "Library" / "Application Support" / "SWIFT" / "data" / "jamea_token.json",
     ]
+    if sys.platform == "win32":
+        appdata = os.environ.get("APPDATA") or str(Path.home() / "AppData" / "Roaming")
+        candidate_paths.extend([
+            Path(appdata) / "Jadwal" / "data" / "jamea_token.json",
+            Path(appdata) / "Jadwal" / "jamea_token.json",
+        ])
     for candidate in candidate_paths:
         if candidate.exists():
             try:

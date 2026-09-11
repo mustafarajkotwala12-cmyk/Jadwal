@@ -54,7 +54,7 @@ public partial class SettingsViewModel : ViewModelBase
     // Credits & About Information
     public string AppName => "Jadwal (جدول)";
     public string DeveloperName => "Mustafa Rajkotwala";
-    public string AppVersion => "3.0.0 (LTS)";
+    public string AppVersion => "4.0.0 (LTS)";
     public string AppSubtitle => "Academic Schedule & Task Companion for Aljamea-tus-Saifiyah";
 
     // Sync Interval (bound to TodayViewModel)

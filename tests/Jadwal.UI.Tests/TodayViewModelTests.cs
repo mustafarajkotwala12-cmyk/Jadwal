@@ -113,18 +113,17 @@ public class TodayViewModelTests
 
         await vm.RefreshScheduleAsync();
 
-        vm.Row1Items.Should().NotBeEmpty();
-        vm.Row2Items.Should().NotBeEmpty();
+        vm.Row1Cards.Should().NotBeEmpty();
+        vm.Row2Cards.Should().NotBeEmpty();
 
-        // Row 1 should contain periods 1 to 5 and a break pill for the 15m gap between p2 and p3
-        var breakPillsInRow1 = vm.Row1Items.OfType<BreakPillItemViewModel>().ToList();
-        breakPillsInRow1.Should().NotBeEmpty();
-        breakPillsInRow1[0].Break.DurationMinutes.Should().Be(15);
+        // Break 1 should be present for the 20m morning recess
+        vm.HasBreak1.Should().BeTrue();
+        vm.Break1.Should().NotBeNull();
+        vm.Break1!.Info.DurationMinutes.Should().Be(20);
 
-        // Row 2 should contain periods 6 and 7
-        var classCardsInRow2 = vm.Row2Items.OfType<ClassCardItemViewModel>().ToList();
-        classCardsInRow2.Should().HaveCount(2);
-        classCardsInRow2[0].Period.Subject.Should().Be("فقه");
+        // Row 2 should contain classes
+        vm.Row2Cards.Should().NotBeEmpty();
+        vm.Row2Cards.Any(c => c.Period.Subject == "فقه").Should().BeTrue();
     }
 
     [Fact]

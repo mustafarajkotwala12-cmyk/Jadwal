@@ -161,7 +161,8 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "timetable.json"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "timetable.json"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json")
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "timetable.json"),
+            Path.Combine(AppContext.BaseDirectory, "data", "timetable.json")
         };
 
         // 1. If we have a valid token matching our configured ITS ID and not explicitly forcing re-login, try direct HTTPS API fetch
@@ -389,12 +390,12 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             psi.EnvironmentVariables["ITS_PASSWORD"] = itsPassword;
         }
 
-        if (workingDir.Contains(".app/Contents/Resources"))
-        {
-            var appDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data");
-            Directory.CreateDirectory(appDataDir);
-            psi.EnvironmentVariables["JAMEA_DATA_DIR"] = appDataDir;
-        }
+        // Ensure JAMEA_DATA_DIR is always set to the correct OS application data directory
+        var appDataDir = OperatingSystem.IsMacOS()
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data")
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data");
+        Directory.CreateDirectory(appDataDir);
+        psi.EnvironmentVariables["JAMEA_DATA_DIR"] = appDataDir;
 
         using var process = new Process { StartInfo = psi };
         var errorBuilder = new StringBuilder();
@@ -428,8 +429,11 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         {
             var tokenFileCandidates = new[]
             {
+                Path.Combine(appDataDir, "jamea_token.json"),
                 Path.Combine(workingDir, "data", "jamea_token.json"),
                 Path.Combine(workingDir, "Data", "jamea_token.json"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "data", "jamea_token.json"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal", "jamea_token.json"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal", "data", "jamea_token.json")
             };
             foreach (var tf in tokenFileCandidates)
@@ -517,13 +521,13 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
         var known = new List<string>
         {
             Path.Combine(home, "JameaHelper", "helper", "jamea_helper.py"),
-            "/Users/mustafarajkotwala/JameaHelper/helper/jamea_helper.py"
+            Path.Combine(home, "Jadwal", "helper", "jamea_helper.py")
         };
         if (OperatingSystem.IsWindows())
         {
-            known.Add(Path.Combine(home, "JameaHelper", "helper", "jamea_helper.py"));
-            // Windows: typically C:\Users\<name>\JameaHelper\helper\jamea_helper.py
             known.Add(Path.Combine("C:\\", "JameaHelper", "helper", "jamea_helper.py"));
+            known.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Jadwal", "helper", "jamea_helper.py"));
+            known.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Jadwal", "helper", "jamea_helper.py"));
         }
         foreach (var k in known)
         {
@@ -537,25 +541,60 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
     {
         if (OperatingSystem.IsWindows())
         {
-            var winCandidates = new[]
+            var candidates = new List<string>();
+
+            // 1. py launcher
+            var pyExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "py.exe");
+            if (File.Exists(pyExe)) return pyExe;
+
+            // 2. Scan LocalApplicationData\Programs\Python\Python3*
+            try
             {
-                // py launcher (preferred on Windows — picks latest installed Python)
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "py.exe"),
-                // Common Windows Python install locations
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Python313", "python.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Python312", "python.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Python311", "python.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python", "Python313", "python.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python", "Python312", "python.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python", "Python311", "python.exe"),
-                "py",
-                "python",
-                "python3"
-            };
-            return winCandidates.FirstOrDefault(File.Exists) ?? "py";
+                var localPrograms = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Python");
+                if (Directory.Exists(localPrograms))
+                {
+                    foreach (var dir in Directory.GetDirectories(localPrograms, "Python3*").OrderByDescending(d => d))
+                    {
+                        var exe = Path.Combine(dir, "python.exe");
+                        if (File.Exists(exe)) candidates.Add(exe);
+                    }
+                }
+            }
+            catch { }
+
+            // 3. Scan ProgramFiles\Python3*
+            try
+            {
+                var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                if (Directory.Exists(pf))
+                {
+                    foreach (var dir in Directory.GetDirectories(pf, "Python3*").OrderByDescending(d => d))
+                    {
+                        var exe = Path.Combine(dir, "python.exe");
+                        if (File.Exists(exe)) candidates.Add(exe);
+                    }
+                }
+            }
+            catch { }
+
+            // 4. Scan PATH directories for python.exe / py.exe
+            var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+            foreach (var segment in pathEnv.Split(';', StringSplitOptions.RemoveEmptyEntries))
+            {
+                try
+                {
+                    var pyInPath = Path.Combine(segment.Trim(), "py.exe");
+                    if (File.Exists(pyInPath)) return pyInPath;
+                    var pythonInPath = Path.Combine(segment.Trim(), "python.exe");
+                    if (File.Exists(pythonInPath)) candidates.Add(pythonInPath);
+                }
+                catch { }
+            }
+
+            return candidates.FirstOrDefault(File.Exists) ?? "python";
         }
 
-        var candidates = new[]
+        var macCandidates = new[]
         {
             "/Library/Frameworks/Python.framework/Versions/3.13/bin/python3",
             "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3",
@@ -565,6 +604,6 @@ public class JamiaTimetableProvider : IJamiaTimetableProvider
             "python3",
             "python"
         };
-        return candidates.FirstOrDefault(File.Exists) ?? "python3";
+        return macCandidates.FirstOrDefault(File.Exists) ?? "python3";
     }
 }

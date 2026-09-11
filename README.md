@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-3.0.0-0B4F39.svg" alt="Version 3.0.0" />
+  <img src="https://img.shields.io/badge/Version-4.0.0-0B4F39.svg" alt="Version 4.0.0" />
   <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows-C5A059.svg" alt="Platform macOS and Windows" />
   <img src="https://img.shields.io/badge/.NET-10.0-512BD4.svg" alt=".NET 10" />
   <img src="https://img.shields.io/badge/UI-Avalonia%2012-purple.svg" alt="Avalonia UI" />
@@ -70,7 +70,7 @@
 - **Developer Credits**: Dedicated credit section highlighting application metadata and developer attribution:
   - **App**: Jadwal (جدول)
   - **Developer**: Mustafa Rajkotwala
-  - **Version**: 3.0.0
+  - **Version**: 4.0.0
 - **Launch at Startup**: Optional automatic system startup toggle on both macOS (LaunchAgent) and Windows (Registry Run).
 
 ---
@@ -105,14 +105,16 @@ JameaHelper/
 ## 🚀 Quick Start for Users
 
 ### macOS
-1. Download **`Jadwal-v3.0.0-macos-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
+1. Download **`Jadwal-v4.0.0-macos-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
 2. Unzip the file and move **`Jadwal.app`** to `/Applications`.
 3. Double-click to open. If prompted by macOS Gatekeeper, right-click and choose **Open**.
 4. Click **Settings > Sync Jamia Timetable** to download your official schedule.
 
 ### Windows
-1. Download **`Jadwal-v3.0.0-windows-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
-2. Extract the archive and launch **`Jadwal.App.exe`**.
+1. Download **`Jadwal-v4.0.0-windows-x64.zip`** from [Releases](https://github.com/mustafarajkotwala12-cmyk/Jadwal/releases).
+2. Extract the archive.
+3. Run **`setup.bat`** once to install Python dependencies.
+4. Launch **`Jadwal.App.exe`**.
 
 ---
 
@@ -163,4 +165,4 @@ dotnet publish src/Jadwal.App/Jadwal.App.csproj -c Release -r win-x64 --self-con
 ## 👤 Credits & Attribution
 - **Developer**: Mustafa Rajkotwala
 - **Institution**: Aljamea-tus-Saifiyah
-- **Version**: 3.0.0
+- **Version**: 4.0.0
