@@ -13,6 +13,7 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ILegacyMigrationService _legacyMigrator;
     private readonly ThemeService _themeService;
     private readonly TodayViewModel? _todayVm;
+    private readonly IJamiaCredentialStore? _credentialStore;
 
     [ObservableProperty]
     private string _itsId = string.Empty;
@@ -80,13 +81,15 @@ public partial class SettingsViewModel : ViewModelBase
         TimetableService timetableService,
         ILegacyMigrationService legacyMigrator,
         ThemeService? themeService = null,
-        TodayViewModel? todayVm = null)
+        TodayViewModel? todayVm = null,
+        IJamiaCredentialStore? credentialStore = null)
     {
         _secureStorage = secureStorage;
         _timetableService = timetableService;
         _legacyMigrator = legacyMigrator;
         _themeService = themeService ?? new ThemeService();
         _todayVm = todayVm;
+        _credentialStore = credentialStore;
 
         var savedTheme = _themeService.GetSavedTheme();
         SelectedTheme = savedTheme switch
@@ -200,14 +203,103 @@ public partial class SettingsViewModel : ViewModelBase
         await _secureStorage.DeleteSecretAsync("its_password");
         await _secureStorage.DeleteSecretAsync("jamea_access_token");
 
+        if (_credentialStore != null)
+        {
+            await _credentialStore.ClearCredentialsAsync();
+        }
+
         ItsId = string.Empty;
         Password = string.Empty;
         StoredItsId = string.Empty;
         IsCredentialsSaved = false;
         StoredCredentialStatusText = "No credentials currently saved in OS vault";
 
-        StatusMessage = "Stored credentials removed from OS vault.";
+        StatusMessage = "Stored credentials and session removed from OS vault.";
         IsSuccess = true;
+    }
+
+    [RelayCommand]
+    public async Task ResetAllAppDataAsync()
+    {
+        IsBusy = true;
+        StatusMessage = "Purging all local credentials, caches, and app data...";
+        IsSuccess = false;
+
+        try
+        {
+            // 1. Clear credentials from secure storage and credential store
+            await _secureStorage.DeleteSecretAsync("its_id");
+            await _secureStorage.DeleteSecretAsync("its_password");
+            await _secureStorage.DeleteSecretAsync("jamea_access_token");
+
+            if (_credentialStore != null)
+            {
+                await _credentialStore.ClearCredentialsAsync();
+            }
+
+            // 2. Wipe data files from user Application Support / AppData
+            var rootDir = OperatingSystem.IsMacOS()
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support", "Jadwal")
+                : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Jadwal");
+
+            if (Directory.Exists(rootDir))
+            {
+                var filesToDelete = new[]
+                {
+                    "stored_timetable.json",
+                    "stored_tasks.json",
+                    "stored_tasks.json.bak",
+                    "stored_changes.json",
+                    ".secure_store",
+                    Path.Combine("data", "jamea_token.json"),
+                    Path.Combine("data", "timetable.json")
+                };
+
+                foreach (var file in filesToDelete)
+                {
+                    var fullPath = Path.Combine(rootDir, file);
+                    try
+                    {
+                        if (File.Exists(fullPath)) File.Delete(fullPath);
+                    }
+                    catch { /* best effort */ }
+                }
+
+                var browserProfileDir = Path.Combine(rootDir, "data", "browser-profile");
+                try
+                {
+                    if (Directory.Exists(browserProfileDir))
+                    {
+                        Directory.Delete(browserProfileDir, recursive: true);
+                    }
+                }
+                catch { /* best effort */ }
+            }
+
+            // 3. Reset in-memory state
+            ItsId = string.Empty;
+            Password = string.Empty;
+            StoredItsId = string.Empty;
+            IsCredentialsSaved = false;
+            StoredCredentialStatusText = "No credentials currently saved in OS vault";
+
+            if (_todayVm != null)
+            {
+                await _todayVm.InitializeAsync();
+            }
+
+            StatusMessage = "All application data and OS vault credentials have been completely reset.";
+            IsSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Reset encountered an issue: {ex.Message}";
+            IsSuccess = false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]

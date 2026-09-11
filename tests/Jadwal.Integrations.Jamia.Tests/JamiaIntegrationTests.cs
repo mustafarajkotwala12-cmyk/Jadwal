@@ -101,9 +101,9 @@ public class JamiaIntegrationTests
         var tokenWithItsId = "header.eyJpdHNJZCI6ICIzMDcxMTk4MCIsICJleHAiOiA0MTAyNDQ0ODAwfQ.signature";
         JwtValidator.GetTokenItsId(tokenWithItsId).Should().Be("30711980");
 
-        // {"studentITSID": "30327222", "exp": 4102444800} -> eyJzdHVkZW50SVRTSUQiOiAiMzAzMjcyMjIiLCAiZXhwIjogNDEwMjQ0NDgwMH0
-        var tokenWithStudentItsId = "header.eyJzdHVkZW50SVRTSUQiOiAiMzAzMjcyMjIiLCAiZXhwIjogNDEwMjQ0NDgwMH0.signature";
-        JwtValidator.GetTokenItsId(tokenWithStudentItsId).Should().Be("30327222");
+        // {"studentITSID": "10000002", "exp": 4102444800} -> eyJzdHVkZW50SVRTSUQiOiAiMTAwMDAwMDIiLCAiZXhwIjogNDEwMjQ0NDgwMH0
+        var tokenWithStudentItsId = "header.eyJzdHVkZW50SVRTSUQiOiAiMTAwMDAwMDIiLCAiZXhwIjogNDEwMjQ0NDgwMH0.signature";
+        JwtValidator.GetTokenItsId(tokenWithStudentItsId).Should().Be("10000002");
 
         // No itsId
         var tokenWithoutItsId = "header.eyJleHAiOiA0MTAyNDQ0ODAwfQ.signature";
@@ -120,8 +120,8 @@ public class JamiaIntegrationTests
         var mockStorage = new TestSecureStorage();
         // User is configured with non-matching ITS ID 99999999
         await mockStorage.SetSecretAsync("its_id", "99999999");
-        // Stored token belongs to 30327222
-        var foreignToken = "header.eyJpdHNJZCI6ICIzMDMyNzIyMiIsICJleHAiOiA0MTAyNDQ0ODAwfQ.sig";
+        // Stored token belongs to 10000002
+        var foreignToken = "header.eyJpdHNJZCI6ICIxMDAwMDAwMiIsICJleHAiOiA0MTAyNDQ0ODAwfQ.sig";
         await mockStorage.SetSecretAsync("jamea_access_token", foreignToken);
 
         var provider = new JamiaTimetableProvider(mockStorage, "/tmp/nonexistent");

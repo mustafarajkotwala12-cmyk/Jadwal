@@ -80,6 +80,14 @@ Follow these 2 simple steps to install Jadwal on your Mac (macOS Monterey, Ventu
 ### 5. Can I use Jadwal offline?
 - **Yes!** Once your timetable is synced, it is saved securely on your local computer (`%APPDATA%\Jadwal` on Windows, `~/Library/Application Support/Jadwal` on macOS). You can view your classes, tasks, and the Fatimid Hijri calendar even without an internet connection.
 
+### 6. "How are my credentials stored? How do I reset to a fresh copy?"
+- **Zero Credentials Shipped**: Release zip files contain **no pre-filled credentials or test data**.
+- **Hardware Encryption**: Your ITS credentials are saved strictly in your computer's native operating system vault (**Apple Keychain** on macOS, **DPAPI Vault** on Windows).
+- **Why credentials persist on the same PC**: Just like modern browsers or Slack, updating or re-unzipping the app on the same machine connects to your existing OS vault for that user account.
+- **How to completely reset / fresh start**:
+  - In Jadwal: Go to **Settings** → Scroll to **Reset App Data & Credentials** → Click **Factory Reset App**.
+  - Or run the included script: `./clean-user-data.sh` (macOS) or `clean-user-data.bat` (Windows) to instantly wipe all local data and return to a pristine fresh state.
+
 ---
 
 ## 👤 Support & Credits

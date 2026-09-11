@@ -230,7 +230,35 @@
                 </StackPanel>
             </Border>
 
-            <!-- CARD 4: CREDITS & ABOUT SECTION -->
+            <!-- CARD 4: RESET APP DATA & CREDENTIALS (FRESH START) -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="#F28B82"
+                    BorderThickness="1.2" CornerRadius="14"
+                    Padding="20" BoxShadow="0 4 14 0 #08000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <StackPanel Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="⚠️" FontSize="16" VerticalAlignment="Center" />
+                        <TextBlock Text="Reset App Data &amp; Credentials (Fresh Start)" FontWeight="Bold" FontSize="15" Foreground="#C5221F" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="Completely erase all cached timetables, task lists, portal session tokens, browser cookies, and saved vault credentials from this computer. Restores the application to a pristine factory fresh installation state."
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+
+                    <Button Content="🗑️ Factory Reset App (Wipe All Data &amp; Credentials)"
+                            Command="{Binding ResetAllAppDataCommand}"
+                            IsEnabled="{Binding !IsBusy}"
+                            Background="#FCE8E6" Foreground="#C5221F"
+                            BorderBrush="#F28B82" BorderThickness="1"
+                            Padding="16,8" CornerRadius="8" FontWeight="Bold" />
+                </StackPanel>
+            </Border>
+
+            <!-- CARD 5: CREDITS & ABOUT SECTION -->
             <Border Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource CardBorderBrush}"
                     BorderThickness="1.5" CornerRadius="14"

@@ -44,7 +44,7 @@ public class SettingsViewModelTests
     public async Task SettingsViewModel_Initialize_WithSavedCredentials_ShowsSavedStatus()
     {
         var secureStorage = new MemorySecureStorage();
-        await secureStorage.SetSecretAsync("its_id", "30327222");
+        await secureStorage.SetSecretAsync("its_id", "10000001");
         await secureStorage.SetSecretAsync("its_password", "SecretPass123");
 
         var timetableRepo = new MemoryTimetableRepo();
@@ -59,8 +59,8 @@ public class SettingsViewModelTests
         await vm.InitializeAsync();
 
         vm.IsCredentialsSaved.Should().BeTrue();
-        vm.StoredItsId.Should().Be("30327222");
-        vm.ItsId.Should().Be("30327222");
+        vm.StoredItsId.Should().Be("10000001");
+        vm.ItsId.Should().Be("10000001");
         vm.Password.Should().Be("SecretPass123");
         vm.StoredCredentialStatusText.Should().Contain("Secured");
     }
@@ -94,7 +94,7 @@ public class SettingsViewModelTests
     public async Task SettingsViewModel_ClearCredentials_RemovesSecretsAndResetsStatus()
     {
         var secureStorage = new MemorySecureStorage();
-        await secureStorage.SetSecretAsync("its_id", "30327222");
+        await secureStorage.SetSecretAsync("its_id", "10000001");
         await secureStorage.SetSecretAsync("its_password", "SecretPass123");
 
         var timetableRepo = new MemoryTimetableRepo();
@@ -218,5 +218,37 @@ public class SettingsViewModelTests
         themeService.GetSavedTheme().Should().Be(JadwalThemeMode.Light);
 
         try { Directory.Delete(tempDir, true); } catch { }
+    }
+
+    [Fact]
+    public async Task SettingsViewModel_ResetAllAppData_WipesCredentialsAndResetsStatus()
+    {
+        var secureStorage = new MemorySecureStorage();
+        await secureStorage.SetSecretAsync("its_id", "10000001");
+        await secureStorage.SetSecretAsync("its_password", "SecretPass123");
+        await secureStorage.SetSecretAsync("jamea_access_token", "test-token");
+
+        var timetableRepo = new MemoryTimetableRepo();
+        var changeRepo = new MemoryChangeRepo();
+        var taskRepo = new MemoryTaskRepo();
+        var dummyProvider = new DummyJamiaProvider();
+
+        var timetableService = new TimetableService(timetableRepo, changeRepo, taskRepo, dummyProvider);
+        var migrator = new DummyLegacyMigrator();
+
+        var vm = new SettingsViewModel(secureStorage, timetableService, migrator);
+        await vm.InitializeAsync();
+        vm.IsCredentialsSaved.Should().BeTrue();
+
+        await vm.ResetAllAppDataAsync();
+
+        vm.IsCredentialsSaved.Should().BeFalse();
+        vm.StoredItsId.Should().BeEmpty();
+        vm.ItsId.Should().BeEmpty();
+        vm.Password.Should().BeEmpty();
+        secureStorage.Storage.Should().NotContainKey("its_id");
+        secureStorage.Storage.Should().NotContainKey("its_password");
+        secureStorage.Storage.Should().NotContainKey("jamea_access_token");
+        vm.StatusMessage.Should().Contain("reset");
     }
 }
