@@ -52,13 +52,26 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isDarkTheme = false;
 
+    // Font size properties
+    [ObservableProperty]
+    private string _selectedFontSize = "Normal";
+
+    [ObservableProperty]
+    private bool _isNormalFontSize = true;
+
+    [ObservableProperty]
+    private bool _isLargeFontSize = false;
+
+    [ObservableProperty]
+    private bool _isExtraLargeFontSize = false;
+
     // Credits & About Information
     public string AppName => "Jadwal (جدول)";
     public string DeveloperName => "Mustafa Rajkotwala";
     public string AppVersion => "4.1.0 (LTS)";
     public string AppSubtitle => "Academic Schedule & Task Companion for Aljamea-tus-Saifiyah";
 
-    // Sync Interval (bound to TodayViewModel)
+    // Sync Interval & Status (bound to TodayViewModel)
     public int[] SyncIntervalOptions => TodayViewModel.SyncIntervalOptions;
 
     public int SyncIntervalMinutes
@@ -71,6 +84,20 @@ public partial class SettingsViewModel : ViewModelBase
                 _todayVm.SyncIntervalMinutes = value;
                 OnPropertyChanged();
             }
+        }
+    }
+
+    public bool IsSyncDisabled
+    {
+        get => _todayVm?.IsSyncDisabled ?? _themeService.GetSavedSyncDisabled();
+        set
+        {
+            if (_todayVm != null)
+            {
+                _todayVm.IsSyncDisabled = value;
+            }
+            _themeService.SaveSyncDisabled(value);
+            OnPropertyChanged();
         }
     }
 
@@ -98,6 +125,10 @@ public partial class SettingsViewModel : ViewModelBase
             _ => "Light"
         };
         UpdateThemeState(SelectedTheme);
+
+        var savedFontSize = _themeService.GetSavedFontSize();
+        SelectedFontSize = savedFontSize;
+        UpdateFontSizeState(savedFontSize);
     }
 
     public async Task InitializeAsync()
@@ -128,6 +159,7 @@ public partial class SettingsViewModel : ViewModelBase
         }
 
         ApplyTheme(SelectedTheme);
+        ApplyFontSize(SelectedFontSize);
     }
 
     [RelayCommand]
@@ -140,6 +172,37 @@ public partial class SettingsViewModel : ViewModelBase
 
         var mode = themeName == "Dark" ? JadwalThemeMode.Dark : JadwalThemeMode.Light;
         _themeService.SaveTheme(mode);
+    }
+
+    [RelayCommand]
+    public void SetFontSize(string sizeName)
+    {
+        if (string.IsNullOrWhiteSpace(sizeName)) return;
+        SelectedFontSize = sizeName;
+        UpdateFontSizeState(sizeName);
+        _themeService.SaveFontSize(sizeName);
+        ApplyFontSize(sizeName);
+    }
+
+    private void UpdateFontSizeState(string size)
+    {
+        IsNormalFontSize = size == "Normal";
+        IsLargeFontSize = size == "Large";
+        IsExtraLargeFontSize = size == "ExtraLarge";
+    }
+
+    private void ApplyFontSize(string size)
+    {
+        var scale = _themeService.GetSavedFontScale();
+        _themeService.NotifyFontScaleChanged(scale);
+
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+        {
+            if (desktop.MainWindow.Content is Avalonia.Controls.LayoutTransformControl ltc)
+            {
+                ltc.LayoutTransform = scale > 1.001 ? new Avalonia.Media.ScaleTransform(scale, scale) : null;
+            }
+        }
     }
 
     private void UpdateThemeState(string theme)

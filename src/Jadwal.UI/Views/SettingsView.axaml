@@ -88,6 +88,78 @@
                             </StackPanel>
                         </Button>
                     </Grid>
+
+                    <!-- DIVIDER -->
+                    <Rectangle Height="1" Fill="{DynamicResource CardBorderBrush}" Margin="0,4" />
+
+                    <!-- APPLICATION FONT SIZE -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Application Font Size" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="Make text and UI font size bigger across the whole application for improved readability."
+                                   FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+
+                        <Grid ColumnDefinitions="*,*,*" Margin="0,4,0,0">
+                            <!-- Standard (Normal) -->
+                            <Button Grid.Column="0"
+                                    Command="{Binding SetFontSizeCommand}"
+                                    CommandParameter="Normal"
+                                    Margin="0,0,6,0" Padding="12,10"
+                                    CornerRadius="10"
+                                    HorizontalAlignment="Stretch"
+                                    BorderBrush="{DynamicResource BronzeBrush}"
+                                    BorderThickness="1">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="Standard" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Default (100%)" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                    <Border IsVisible="{Binding IsNormalFontSize}"
+                                            Background="{DynamicResource EmeraldSoftBrush}"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="✓ Active" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource EmeraldBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Large -->
+                            <Button Grid.Column="1"
+                                    Command="{Binding SetFontSizeCommand}"
+                                    CommandParameter="Large"
+                                    Margin="3,0,3,0" Padding="12,10"
+                                    CornerRadius="10"
+                                    HorizontalAlignment="Stretch"
+                                    BorderBrush="{DynamicResource BronzeBrush}"
+                                    BorderThickness="1">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="Large" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Bigger (+15%)" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                    <Border IsVisible="{Binding IsLargeFontSize}"
+                                            Background="{DynamicResource EmeraldSoftBrush}"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="✓ Active" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource EmeraldBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </Button>
+
+                            <!-- Extra Large -->
+                            <Button Grid.Column="2"
+                                    Command="{Binding SetFontSizeCommand}"
+                                    CommandParameter="ExtraLarge"
+                                    Margin="6,0,0,0" Padding="12,10"
+                                    CornerRadius="10"
+                                    HorizontalAlignment="Stretch"
+                                    BorderBrush="{DynamicResource BronzeBrush}"
+                                    BorderThickness="1">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="Extra Large" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Maximum (+30%)" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" />
+                                    <Border IsVisible="{Binding IsExtraLargeFontSize}"
+                                            Background="{DynamicResource EmeraldSoftBrush}"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Center">
+                                        <TextBlock Text="✓ Active" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource EmeraldBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
             </Border>
 
@@ -179,11 +251,11 @@
                                 Padding="16,9" CornerRadius="8" FontWeight="SemiBold" Margin="0,0,10,10" />
                     </WrapPanel>
 
-                    <!-- AUTO SYNC INTERVAL -->
+                    <!-- AUTO SYNC INTERVAL & DISABLE SYNC -->
                     <Border Background="#0A000000" CornerRadius="10" Padding="14,10" Margin="0,4,0,0">
                         <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                <TextBlock Text="🔁 Auto Sync Interval" FontSize="13" FontWeight="Bold"
+                                <TextBlock Text="🔁 Auto Sync Settings" FontSize="13" FontWeight="Bold"
                                            Foreground="{DynamicResource TextPrimaryBrush}" />
                                 <TextBlock Text="Background sync with Jamia API. Detects timetable changes automatically."
                                            FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
@@ -191,11 +263,19 @@
                             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="12,0,0,0">
                                 <ComboBox SelectedItem="{Binding SyncIntervalMinutes}"
                                           ItemsSource="{Binding SyncIntervalOptions}"
+                                          IsEnabled="{Binding !IsSyncDisabled}"
                                           MinWidth="80" CornerRadius="8"
                                           ToolTip.Tip="Choose how often the app syncs with the Jamia portal (3–10 minutes)" />
                                 <TextBlock Text="min" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextSecondaryBrush}"
                                            VerticalAlignment="Center" />
+                                <Border Width="1" Height="22" Background="{DynamicResource CardBorderBrush}" Margin="6,0" />
+                                <CheckBox IsChecked="{Binding IsSyncDisabled}"
+                                          Content="Disable Sync"
+                                          FontWeight="SemiBold"
+                                          FontSize="12"
+                                          VerticalAlignment="Center"
+                                          ToolTip.Tip="Turn off automatic background timetable synchronization" />
                             </StackPanel>
                         </Grid>
                     </Border>

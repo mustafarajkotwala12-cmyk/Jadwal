@@ -11,5 +11,7 @@
         MinWidth="900" MinHeight="600"
         Background="{DynamicResource PageBackgroundBrush}"
         WindowStartupLocation="CenterScreen">
-    <views:MainView Name="MainViewControl" />
+    <LayoutTransformControl Name="RootLayoutTransform">
+        <views:MainView Name="MainViewControl" />
+    </LayoutTransformControl>
 </Window>

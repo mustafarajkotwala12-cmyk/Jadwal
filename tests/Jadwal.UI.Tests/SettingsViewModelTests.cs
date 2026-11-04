@@ -251,4 +251,88 @@ public class SettingsViewModelTests
         secureStorage.Storage.Should().NotContainKey("jamea_access_token");
         vm.StatusMessage.Should().Contain("reset");
     }
+
+    [Fact]
+    public void SettingsViewModel_SetFontSize_UpdatesSelectionAndPersistence()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "jadwal_test_font_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var themeService = new ThemeService(tempDir);
+            var secureStorage = new MemorySecureStorage();
+            var timetableRepo = new MemoryTimetableRepo();
+            var changeRepo = new MemoryChangeRepo();
+            var taskRepo = new MemoryTaskRepo();
+            var dummyProvider = new DummyJamiaProvider();
+            var timetableService = new TimetableService(timetableRepo, changeRepo, taskRepo, dummyProvider);
+            var migrator = new DummyLegacyMigrator();
+
+            var vm = new SettingsViewModel(secureStorage, timetableService, migrator, themeService);
+
+            vm.SelectedFontSize.Should().Be("Normal");
+            vm.IsNormalFontSize.Should().BeTrue();
+            vm.IsLargeFontSize.Should().BeFalse();
+            vm.IsExtraLargeFontSize.Should().BeFalse();
+
+            vm.SetFontSize("Large");
+            vm.SelectedFontSize.Should().Be("Large");
+            vm.IsNormalFontSize.Should().BeFalse();
+            vm.IsLargeFontSize.Should().BeTrue();
+            vm.IsExtraLargeFontSize.Should().BeFalse();
+            themeService.GetSavedFontSize().Should().Be("Large");
+            themeService.GetSavedFontScale().Should().Be(1.15);
+
+            vm.SetFontSize("ExtraLarge");
+            vm.SelectedFontSize.Should().Be("ExtraLarge");
+            vm.IsExtraLargeFontSize.Should().BeTrue();
+            themeService.GetSavedFontSize().Should().Be("ExtraLarge");
+            themeService.GetSavedFontScale().Should().Be(1.30);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void SettingsViewModel_DisableSync_UpdatesStateAndTodayViewModel()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "jadwal_test_sync_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var themeService = new ThemeService(tempDir);
+            var secureStorage = new MemorySecureStorage();
+            var timetableRepo = new MemoryTimetableRepo();
+            var changeRepo = new MemoryChangeRepo();
+            var taskRepo = new MemoryTaskRepo();
+            var dummyProvider = new DummyJamiaProvider();
+            var timetableService = new TimetableService(timetableRepo, changeRepo, taskRepo, dummyProvider);
+            var migrator = new DummyLegacyMigrator();
+            var timeProvider = new TestTimeProvider();
+            var taskService = new TaskService(taskRepo, timeProvider);
+            var dashboardService = new DashboardService(timetableRepo, taskRepo, changeRepo, timeProvider);
+            var todayVm = new TodayViewModel(dashboardService, taskService, timetableService, timeProvider, themeService: themeService);
+
+            var vm = new SettingsViewModel(secureStorage, timetableService, migrator, themeService, todayVm);
+
+            vm.IsSyncDisabled.Should().BeFalse();
+            todayVm.IsSyncDisabled.Should().BeFalse();
+
+            vm.IsSyncDisabled = true;
+            vm.IsSyncDisabled.Should().BeTrue();
+            todayVm.IsSyncDisabled.Should().BeTrue();
+            themeService.GetSavedSyncDisabled().Should().BeTrue();
+
+            vm.IsSyncDisabled = false;
+            vm.IsSyncDisabled.Should().BeFalse();
+            todayVm.IsSyncDisabled.Should().BeFalse();
+            themeService.GetSavedSyncDisabled().Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+        }
+    }
 }

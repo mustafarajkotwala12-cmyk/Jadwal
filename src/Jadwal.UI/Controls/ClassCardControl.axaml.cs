@@ -20,6 +20,14 @@ public partial class ClassCardControl : UserControl
         }
     }
 
+    private void OnFrontPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is ClassCardItemViewModel vm)
+        {
+            vm.ToggleFlip();
+        }
+    }
+
     private void OnNewTaskKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter && DataContext is ClassCardItemViewModel vm)

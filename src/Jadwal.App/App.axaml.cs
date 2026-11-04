@@ -40,7 +40,9 @@ public partial class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainVm = _serviceProvider.GetRequiredService<MainViewModel>();
-            desktop.MainWindow = new MainWindow(mainVm);
+            var mainWindow = new MainWindow(mainVm);
+            desktop.MainWindow = mainWindow;
+            mainWindow.SetFontScale(themeService.GetSavedFontScale());
             await mainVm.InitializeAsync();
         }
 

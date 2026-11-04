@@ -340,23 +340,48 @@ public partial class TodayViewModel : ViewModelBase
     [ObservableProperty]
     private int _syncIntervalMinutes = 4;
 
+    [ObservableProperty]
+    private bool _isSyncDisabled = false;
+
     partial void OnSyncIntervalMinutesChanged(int value)
     {
         RestartSyncTimer();
     }
+
+    partial void OnIsSyncDisabledChanged(bool value)
+    {
+        _themeService?.SaveSyncDisabled(value);
+        if (value)
+        {
+            StopSyncTimer();
+        }
+        else
+        {
+            StartSyncTimer();
+        }
+    }
+
+    private readonly ThemeService? _themeService;
 
     public TodayViewModel(
         DashboardService dashboardService,
         TaskService taskService,
         TimetableService timetableService,
         ITimeProvider timeProvider,
-        CalendarService? calendarService = null)
+        CalendarService? calendarService = null,
+        ThemeService? themeService = null)
     {
         _dashboardService = dashboardService;
         _taskService = taskService;
         _timetableService = timetableService;
         _timeProvider = timeProvider;
         _calendarService = calendarService ?? new CalendarService();
+        _themeService = themeService;
+
+        if (_themeService != null)
+        {
+            _isSyncDisabled = _themeService.GetSavedSyncDisabled();
+        }
 
         CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
     }
@@ -365,7 +390,10 @@ public partial class TodayViewModel : ViewModelBase
     {
         await RefreshScheduleAsync();
         StartClockTimer();
-        StartSyncTimer();
+        if (!IsSyncDisabled)
+        {
+            StartSyncTimer();
+        }
     }
 
     public void StartClockTimer()
@@ -386,6 +414,7 @@ public partial class TodayViewModel : ViewModelBase
     public void StartSyncTimer()
     {
         _syncTimer?.Stop();
+        if (IsSyncDisabled) return;
         _syncTimer = new Avalonia.Threading.DispatcherTimer
         {
             Interval = TimeSpan.FromMinutes(SyncIntervalMinutes)
@@ -402,13 +431,13 @@ public partial class TodayViewModel : ViewModelBase
 
     private void RestartSyncTimer()
     {
-        if (_syncTimer != null) StartSyncTimer();
+        if (_syncTimer != null && !IsSyncDisabled) StartSyncTimer();
     }
 
     /// <summary>Background sync: fetches the latest timetable from Jamia API without forcing login.</summary>
     private async Task SilentSyncAsync()
     {
-        if (_timetableService == null) return;
+        if (IsSyncDisabled || _timetableService == null) return;
         try
         {
             await _timetableService.RefreshTimetableAsync(forceLogin: false);
