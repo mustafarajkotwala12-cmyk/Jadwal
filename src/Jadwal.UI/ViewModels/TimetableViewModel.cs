@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jadwal.Application.Interfaces;
+using Jadwal.Application.Models;
 using Jadwal.Application.Services;
 using Jadwal.Domain.Enums;
 using Jadwal.Domain.Models;
@@ -13,6 +14,7 @@ public partial class TimetableViewModel : ViewModelBase
     private readonly TimetableService _timetableService;
     private readonly TaskService _taskService;
     private readonly ITimeProvider _timeProvider;
+    private readonly PrayerTimeService? _prayerTimeService;
 
     [ObservableProperty]
     private JadwalDayOfWeek _selectedDay = JadwalDayOfWeek.Monday;
@@ -79,11 +81,18 @@ public partial class TimetableViewModel : ViewModelBase
     public TimetableViewModel(
         TimetableService timetableService,
         TaskService taskService,
-        ITimeProvider timeProvider)
+        ITimeProvider timeProvider,
+        PrayerTimeService? prayerTimeService = null)
     {
         _timetableService = timetableService;
         _taskService = taskService;
         _timeProvider = timeProvider;
+        _prayerTimeService = prayerTimeService;
+
+        if (_prayerTimeService != null)
+        {
+            _prayerTimeService.CityChanged += async _ => await LoadDayScheduleAsync();
+        }
     }
 
     private Avalonia.Threading.DispatcherTimer? _clockTimer;
@@ -196,7 +205,19 @@ public partial class TimetableViewModel : ViewModelBase
         }
 
         var dayPeriods = snapshot.Periods.Where(p => p.Day == SelectedDay).ToList();
-        var three = ScheduleTimelineBuilder.BuildThreeRowSchedule(dayPeriods, SelectedDay);
+        
+        PrayerTimings? prayerTimings = null;
+        if (_prayerTimeService != null)
+        {
+            var targetDate = GetDateForDay(SelectedDay);
+            prayerTimings = await _prayerTimeService.GetPrayerTimingsAsync(targetDate);
+        }
+
+        var three = ScheduleTimelineBuilder.BuildThreeRowSchedule(
+            dayPeriods,
+            SelectedDay,
+            zawaalTime: prayerTimings?.Zawaal,
+            zuhrEndTime: prayerTimings?.ZuhrEnd);
         var query = SearchText?.Trim() ?? string.Empty;
 
         Row1Cards.Clear();
@@ -380,6 +401,25 @@ public partial class TimetableViewModel : ViewModelBase
         return period.Subject.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                period.Details.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                period.PeriodName.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private DateOnly GetDateForDay(JadwalDayOfWeek targetDay)
+    {
+        var curDate = _timeProvider.CurrentDate;
+        var curDow = curDate.DayOfWeek;
+        int targetIso = targetDay switch
+        {
+            JadwalDayOfWeek.Monday => 1,
+            JadwalDayOfWeek.Tuesday => 2,
+            JadwalDayOfWeek.Wednesday => 3,
+            JadwalDayOfWeek.Thursday => 4,
+            JadwalDayOfWeek.Friday => 5,
+            JadwalDayOfWeek.Saturday => 6,
+            _ => 1
+        };
+        int currentIso = curDow == DayOfWeek.Sunday ? 7 : (int)curDow;
+        int diff = targetIso - currentIso;
+        return curDate.AddDays(diff);
     }
 }
 

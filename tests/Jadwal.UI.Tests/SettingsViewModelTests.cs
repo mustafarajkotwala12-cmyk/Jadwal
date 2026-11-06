@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Jadwal.Application.Interfaces;
+using Jadwal.Application.Models;
 using Jadwal.Application.Services;
 using Jadwal.Domain.Models;
 using Jadwal.UI.ViewModels;
@@ -329,6 +330,101 @@ public class SettingsViewModelTests
             vm.IsSyncDisabled.Should().BeFalse();
             todayVm.IsSyncDisabled.Should().BeFalse();
             themeService.GetSavedSyncDisabled().Should().BeFalse();
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Fact]
+    public void BreakBarViewModel_RefreshmentBar_IsThinnerThanNamazBar()
+    {
+        var recessInfo = new BreakBarInfo(
+            Id: "break_recess",
+            Name: "Morning Recess Break",
+            NamaazNote: "Refreshment & Academic Preparation",
+            StartTime: "10:35",
+            EndTime: "10:55",
+            DurationMinutes: 20,
+            Icon: "☕"
+        );
+
+        var namazInfo = new BreakBarInfo(
+            Id: "break_lunch_namaz",
+            Name: "Lunch & Namaz Break",
+            NamaazNote: "🕌 Zawaal 12:21 PM  ·  Zuhr End 2:15 PM",
+            StartTime: "12:40",
+            EndTime: "14:00",
+            DurationMinutes: 80,
+            Icon: "☀️",
+            ZawaalTime: "12:21 PM",
+            ZuhrEndTime: "2:15 PM"
+        );
+
+        var recessVm = new BreakBarViewModel(recessInfo);
+        var namazVm = new BreakBarViewModel(namazInfo);
+
+        // Refreshment bar must be flagged correctly
+        recessVm.IsRefreshmentBreak.Should().BeTrue();
+        recessVm.IsNamazBreak.Should().BeFalse();
+
+        // Namaz bar must be flagged correctly
+        namazVm.IsRefreshmentBreak.Should().BeFalse();
+        namazVm.IsNamazBreak.Should().BeTrue();
+        namazVm.HasNamaazTimings.Should().BeTrue();
+
+        // Refreshment bar must have significantly thinner padding, margin, and typography
+        recessVm.BarPadding.Top.Should().BeLessThan(namazVm.BarPadding.Top);
+        recessVm.BarPadding.Bottom.Should().BeLessThan(namazVm.BarPadding.Bottom);
+        recessVm.BarMargin.Top.Should().BeLessThan(namazVm.BarMargin.Top);
+        recessVm.IconFontSize.Should().BeLessThan(namazVm.IconFontSize);
+        recessVm.TitleFontSize.Should().BeLessThan(namazVm.TitleFontSize);
+    }
+
+    [Fact]
+    public async Task SettingsViewModel_CitySelection_DefaultsToMumbaiAndPersistsChange()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "jadwal_test_city_" + Guid.NewGuid());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var prayerService = new PrayerTimeService(dataDirectory: tempDir);
+            var themeService = new ThemeService(tempDir);
+            var secureStorage = new MemorySecureStorage();
+            var timetableRepo = new MemoryTimetableRepo();
+            var changeRepo = new MemoryChangeRepo();
+            var taskRepo = new MemoryTaskRepo();
+            var dummyProvider = new DummyJamiaProvider();
+            var timetableService = new TimetableService(timetableRepo, changeRepo, taskRepo, dummyProvider);
+            var migrator = new DummyLegacyMigrator();
+
+            var vm = new SettingsViewModel(
+                secureStorage,
+                timetableService,
+                migrator,
+                themeService: themeService,
+                prayerTimeService: prayerService);
+
+            // Default city must be Mumbai (116)
+            vm.SelectedCity.Should().NotBeNull();
+            vm.SelectedCity.Id.Should().Be(116);
+            vm.SelectedCity.DisplayName.Should().Be("Mumbai");
+            vm.AvailableCities.Should().NotBeEmpty();
+            vm.AvailableCities.First().DisplayName.Should().Be("Mumbai");
+
+            // Change city to Surat (145)
+            var surat = vm.AvailableCities.First(c => c.DisplayName == "Surat");
+            vm.SelectedCity = surat;
+
+            // Persisted in PrayerTimeService
+            prayerService.GetSavedCity().Id.Should().Be(145);
+            prayerService.GetSavedCity().DisplayName.Should().Be("Surat");
+
+            // Preview update is triggered
+            await vm.UpdateNamazPreviewAsync();
+            vm.NamazTimingsPreview.Should().Contain("Zawaal");
+            vm.NamazTimingsPreview.Should().Contain("Zuhr End");
         }
         finally
         {

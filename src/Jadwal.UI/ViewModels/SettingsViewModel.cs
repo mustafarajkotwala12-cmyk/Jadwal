@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jadwal.Application.Interfaces;
+using Jadwal.Application.Models;
 using Jadwal.Application.Services;
 using Jadwal.Domain.Models;
 
@@ -14,6 +15,39 @@ public partial class SettingsViewModel : ViewModelBase
     private readonly ThemeService _themeService;
     private readonly TodayViewModel? _todayVm;
     private readonly IJamiaCredentialStore? _credentialStore;
+    private readonly PrayerTimeService? _prayerTimeService;
+
+    // City & Namaaz Timings (AajNoDin)
+    public IReadOnlyList<CityOption> AvailableCities => PrayerTimeService.SupportedCities;
+
+    [ObservableProperty]
+    private CityOption _selectedCity;
+
+    [ObservableProperty]
+    private string _namazTimingsPreview = "Loading prayer timings...";
+
+    partial void OnSelectedCityChanged(CityOption value)
+    {
+        if (value != null)
+        {
+            _prayerTimeService?.SaveCity(value);
+            _ = UpdateNamazPreviewAsync();
+        }
+    }
+
+    public async Task UpdateNamazPreviewAsync()
+    {
+        if (_prayerTimeService != null && SelectedCity != null)
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var timings = await _prayerTimeService.GetPrayerTimingsAsync(today, SelectedCity);
+            NamazTimingsPreview = $"🕌 Zawaal: {timings.Zawaal}   •   Zuhr End: {timings.ZuhrEnd}";
+        }
+        else
+        {
+            NamazTimingsPreview = "🕌 Zawaal: 12:21 PM   •   Zuhr End: 2:15 PM";
+        }
+    }
 
     [ObservableProperty]
     private string _itsId = string.Empty;
@@ -109,7 +143,8 @@ public partial class SettingsViewModel : ViewModelBase
         ILegacyMigrationService legacyMigrator,
         ThemeService? themeService = null,
         TodayViewModel? todayVm = null,
-        IJamiaCredentialStore? credentialStore = null)
+        IJamiaCredentialStore? credentialStore = null,
+        PrayerTimeService? prayerTimeService = null)
     {
         _secureStorage = secureStorage;
         _timetableService = timetableService;
@@ -117,6 +152,9 @@ public partial class SettingsViewModel : ViewModelBase
         _themeService = themeService ?? new ThemeService();
         _todayVm = todayVm;
         _credentialStore = credentialStore;
+        _prayerTimeService = prayerTimeService;
+
+        _selectedCity = _prayerTimeService?.GetSavedCity() ?? CityOption.Mumbai;
 
         var savedTheme = _themeService.GetSavedTheme();
         SelectedTheme = savedTheme switch
@@ -133,6 +171,8 @@ public partial class SettingsViewModel : ViewModelBase
 
     public async Task InitializeAsync()
     {
+        await UpdateNamazPreviewAsync();
+
         var savedId = await _secureStorage.GetSecretAsync("its_id") ?? string.Empty;
         var savedPass = await _secureStorage.GetSecretAsync("its_password") ?? string.Empty;
 

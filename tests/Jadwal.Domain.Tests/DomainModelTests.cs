@@ -260,5 +260,34 @@ public class DomainModelTests
 
         lunchBreak.TimeRangeFormatted.Should().Be("12:40 PM – 2:00 PM");
     }
+
+    [Fact]
+    public void BuildThreeRowSchedule_WithPrayerTimings_PopulatesBreak2WithZawaalAndZuhrEnd()
+    {
+        var periods = new List<PeriodOccurrence>
+        {
+            new("p2", JadwalDayOfWeek.Monday, "2026-09-07", "Period 2", "08:50", "09:25", "Subject 2", "Room A"),
+            new("p3", JadwalDayOfWeek.Monday, "2026-09-07", "Period 3", "09:25", "10:00", "Subject 3", "Room B"),
+            new("p4", JadwalDayOfWeek.Monday, "2026-09-07", "Period 4", "10:00", "10:35", "Subject 4", "Room C"),
+            new("p5", JadwalDayOfWeek.Monday, "2026-09-07", "Period 5", "10:55", "11:30", "Subject 5", "Room D"),
+            new("p6", JadwalDayOfWeek.Monday, "2026-09-07", "Period 6", "11:30", "12:05", "Subject 6", "Room E"),
+            new("p7", JadwalDayOfWeek.Monday, "2026-09-07", "Period 7", "12:05", "12:40", "Subject 7", "Room F"),
+            new("p8", JadwalDayOfWeek.Monday, "2026-09-07", "Period 8", "14:00", "14:35", "Subject 8", "Room G"),
+            new("p9", JadwalDayOfWeek.Monday, "2026-09-07", "Period 9", "14:35", "15:10", "Subject 9", "Room H"),
+            new("p10", JadwalDayOfWeek.Monday, "2026-09-07", "Period 10", "15:10", "15:45", "Subject 10", "Room I")
+        };
+
+        var three = ScheduleTimelineBuilder.BuildThreeRowSchedule(
+            periods,
+            JadwalDayOfWeek.Monday,
+            zawaalTime: "12:21 PM",
+            zuhrEndTime: "2:15 PM"
+        );
+
+        three.Break2.Should().NotBeNull();
+        three.Break2!.ZawaalTime.Should().Be("12:21 PM");
+        three.Break2!.ZuhrEndTime.Should().Be("2:15 PM");
+        three.Break2!.NamaazNote.Should().Be("🕌 Zawaal 12:21 PM  ·  Zuhr End 2:15 PM");
+    }
 }
 

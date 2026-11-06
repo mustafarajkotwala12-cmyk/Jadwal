@@ -234,7 +234,9 @@ public static class ScheduleTimelineBuilder
     public static ThreeRowDaySchedule BuildThreeRowSchedule(
         IEnumerable<PeriodOccurrence> periods,
         JadwalDayOfWeek day,
-        TimeOnly? currentTime = null)
+        TimeOnly? currentTime = null,
+        string? zawaalTime = null,
+        string? zuhrEndTime = null)
     {
         var now = currentTime ?? TimeOnly.FromDateTime(DateTime.Now);
         var sorted = periods
@@ -337,14 +339,22 @@ public static class ScheduleTimelineBuilder
                 var dur2 = Math.Max(0, startMin3 - endMin2);
 
                 var isFriday = day == JadwalDayOfWeek.Friday;
+                var namazTiming = !string.IsNullOrWhiteSpace(zawaalTime) && !string.IsNullOrWhiteSpace(zuhrEndTime)
+                    ? $"🕌 Zawaal {zawaalTime}  ·  Zuhr End {zuhrEndTime}"
+                    : isFriday
+                        ? "🕌 Jumua Namaz in Masjid"
+                        : "🕌 Zawaal 12:21 PM  ·  Zuhr End 2:15 PM";
+
                 break2 = new BreakBarInfo(
                     Id: isFriday ? "break_jumua" : "break_lunch_namaz",
                     Name: isFriday ? "Jumua Mubarak • Namaz & Lunch Break" : "Lunch & Namaz Break",
-                    NamaazNote: isFriday ? "🕌 Jumua Namaz in Masjid" : "🕌 Zohr Namaaz • 1:15 PM",
+                    NamaazNote: namazTiming,
                     StartTime: endRow2,
                     EndTime: startRow3,
                     DurationMinutes: dur2 > 0 ? dur2 : 80,
-                    Icon: isFriday ? "🕌" : "☀️"
+                    Icon: isFriday ? "🕌" : "☀️",
+                    ZawaalTime: zawaalTime,
+                    ZuhrEndTime: zuhrEndTime
                 );
             }
         }
@@ -368,7 +378,9 @@ public record BreakBarInfo(
     string StartTime,
     string EndTime,
     int DurationMinutes,
-    string Icon
+    string Icon,
+    string? ZawaalTime = null,
+    string? ZuhrEndTime = null
 )
 {
     public string TimeRangeFormatted => $"{PeriodOccurrence.FormatTo12Hour(StartTime)} – {PeriodOccurrence.FormatTo12Hour(EndTime)}";

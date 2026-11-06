@@ -163,6 +163,50 @@
                 </StackPanel>
             </Border>
 
+            <!-- CARD: NAMAAZ TIMINGS & CITY (AAJNODIN) -->
+            <Border Background="{DynamicResource CardBackgroundBrush}"
+                    BorderBrush="{DynamicResource CardBorderBrush}"
+                    BorderThickness="1.5" CornerRadius="14"
+                    Padding="20" BoxShadow="0 4 14 0 #10000000">
+                <Border.Transitions>
+                    <Transitions>
+                        <BrushTransition Property="Background" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                        <BrushTransition Property="BorderBrush" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                    </Transitions>
+                </Border.Transitions>
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Namaaz Timings &amp; City (AajNoDin)" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource BronzeBrush}" />
+                    <TextBlock Text="Select your city to retrieve live astronomical Zawaal and Zuhr End timings from AajNoDin, displayed in the midday timetable break."
+                               FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" />
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                        <StackPanel Grid.Column="0" Spacing="6" Margin="0,0,16,0">
+                            <TextBlock Text="Select City" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                            <ComboBox ItemsSource="{Binding AvailableCities}"
+                                      SelectedItem="{Binding SelectedCity}"
+                                      HorizontalAlignment="Stretch"
+                                      CornerRadius="8" />
+                        </StackPanel>
+
+                        <!-- Live preview badge -->
+                        <Border Grid.Column="1"
+                                Background="{DynamicResource GoldSoftBrush}"
+                                BorderBrush="{DynamicResource GoldBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10"
+                                Padding="14,10"
+                                VerticalAlignment="Bottom">
+                            <StackPanel Spacing="2">
+                                <TextBlock Text="Live Today's Timings" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" />
+                                <TextBlock Text="{Binding NamazTimingsPreview}"
+                                           FontWeight="Bold" FontSize="12"
+                                           Foreground="{DynamicResource BronzeBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- CARD 2: ITS CREDENTIALS & SCHEDULE SYNC -->
             <Border Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource CardBorderBrush}"

@@ -26,6 +26,8 @@ public class DashboardService
 
     public async Task<TodayClassTimetableDto> GetTodayClassTimetableAsync(
         JadwalDayOfWeek? overrideDay = null,
+        string? zawaalTime = null,
+        string? zuhrEndTime = null,
         CancellationToken ct = default)
     {
         var targetDay = overrideDay ?? _timeProvider.CurrentDayOfWeek;
@@ -36,7 +38,7 @@ public class DashboardService
         var currentTime = _timeProvider.CurrentTime;
         var timeline = ScheduleTimelineBuilder.BuildTimeline(dayPeriods, currentTime);
         var (row1, row2) = ScheduleTimelineBuilder.SplitIntoTwoHorizontalRows(timeline, targetDay);
-        var threeRowSchedule = ScheduleTimelineBuilder.BuildThreeRowSchedule(dayPeriods, targetDay, currentTime);
+        var threeRowSchedule = ScheduleTimelineBuilder.BuildThreeRowSchedule(dayPeriods, targetDay, currentTime, zawaalTime, zuhrEndTime);
 
         var changes = await _changeRepository.GetChangesAsync(ct);
         var activeChanges = changes.Where(c => !c.IsAcknowledged).ToList().AsReadOnly();
@@ -76,7 +78,7 @@ public class DashboardService
     public async Task<DashboardSummaryDto> GetTodayDashboardAsync(CancellationToken ct = default)
     {
         var tasks = await _taskRepository.GetAllTasksAsync(ct);
-        var todayClasses = await GetTodayClassTimetableAsync(null, ct);
+        var todayClasses = await GetTodayClassTimetableAsync(ct: ct);
 
         var totalTasks = tasks.Count;
         var pendingTasks = tasks.Count(t => !t.IsCompleted);
@@ -105,7 +107,7 @@ public class DashboardService
 
     public async Task<MenuBarSummaryDto> GetMenuBarSummaryAsync(CancellationToken ct = default)
     {
-        var todayClasses = await GetTodayClassTimetableAsync(null, ct);
+        var todayClasses = await GetTodayClassTimetableAsync(ct: ct);
         var allTasks = await _taskRepository.GetAllTasksAsync(ct);
 
         var nextOrCurrent = todayClasses.ActivePeriod ?? todayClasses.NextPeriod;

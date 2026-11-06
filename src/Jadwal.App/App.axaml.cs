@@ -86,6 +86,7 @@ public partial class App : Avalonia.Application
 
         // Application Services
         services.AddSingleton<ThemeService>();
+        services.AddSingleton<PrayerTimeService>();
         services.AddSingleton<TaskService>();
         services.AddSingleton<TimetableService>();
         services.AddSingleton<DashboardService>();

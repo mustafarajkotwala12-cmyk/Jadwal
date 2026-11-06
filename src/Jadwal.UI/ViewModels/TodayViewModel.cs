@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Jadwal.Application.DTOs;
 using Jadwal.Application.Interfaces;
+using Jadwal.Application.Models;
 using Jadwal.Application.Services;
 using Jadwal.Domain.Enums;
 using Jadwal.Domain.Models;
@@ -362,6 +363,7 @@ public partial class TodayViewModel : ViewModelBase
     }
 
     private readonly ThemeService? _themeService;
+    private readonly PrayerTimeService? _prayerTimeService;
 
     public TodayViewModel(
         DashboardService dashboardService,
@@ -369,7 +371,8 @@ public partial class TodayViewModel : ViewModelBase
         TimetableService timetableService,
         ITimeProvider timeProvider,
         CalendarService? calendarService = null,
-        ThemeService? themeService = null)
+        ThemeService? themeService = null,
+        PrayerTimeService? prayerTimeService = null)
     {
         _dashboardService = dashboardService;
         _taskService = taskService;
@@ -377,10 +380,16 @@ public partial class TodayViewModel : ViewModelBase
         _timeProvider = timeProvider;
         _calendarService = calendarService ?? new CalendarService();
         _themeService = themeService;
+        _prayerTimeService = prayerTimeService;
 
         if (_themeService != null)
         {
             _isSyncDisabled = _themeService.GetSavedSyncDisabled();
+        }
+
+        if (_prayerTimeService != null)
+        {
+            _prayerTimeService.CityChanged += async _ => await RefreshScheduleAsync();
         }
 
         CurrentTimeString = DateTime.Now.ToString("h:mm:ss tt", System.Globalization.CultureInfo.InvariantCulture);
@@ -478,7 +487,15 @@ public partial class TodayViewModel : ViewModelBase
     [RelayCommand]
     public async Task RefreshScheduleAsync()
     {
-        var dto = await _dashboardService.GetTodayClassTimetableAsync();
+        PrayerTimings? prayerTimings = null;
+        if (_prayerTimeService != null)
+        {
+            prayerTimings = await _prayerTimeService.GetPrayerTimingsAsync(_timeProvider.CurrentDate);
+        }
+
+        var dto = await _dashboardService.GetTodayClassTimetableAsync(
+            zawaalTime: prayerTimings?.Zawaal,
+            zuhrEndTime: prayerTimings?.ZuhrEnd);
         var allTasks = await _taskService.GetAllTasksAsync();
 
         _loadedDay = dto.Day;
